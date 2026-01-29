@@ -1,0 +1,15 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "GradEval-Local",
+      "Group": "Servers",
+      "Host": "db",
+      "Port": 5432,
+      "MaintenanceDB": "gradeval360",
+      "Username": "user",
+      "SSLMode": "prefer",
+      "Service": null,
+      "PassFile": null
+    }
+  }
+}

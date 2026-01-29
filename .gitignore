@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+dist/
+build/
+.cache/
+
+# Environment Variables (IMPORTANT: Never push secrets)
+.env
+.env.local
+.env.*.local
+
+# Docker
+.docker-data/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.log
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# TypeScript Build Info
+*.tsbuildinfo
