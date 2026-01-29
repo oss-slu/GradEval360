@@ -1,23 +1,44 @@
-# GradEval360 - Development Environment
+# GradEval360
 
-## Project Overview
-[cite_start]GradEval360 is SLU's centralized performance management platform for Graduate Assistants[cite: 33]. 
-[cite_start]This iteration (6 Sprints) focuses on the **Expectation Setting** workflow[cite: 56].
+Welcome to the **GradEval360** development team! This project is the centralized performance management platform for Saint Louis University's Graduate Assistants.
+
+## Project Focus: Spring 2026
+Our goal for this semester is to complete the **Expectation Setting** workflow. This is the first and most critical step in the GA lifecycle, where GAs and Mentors agree on goals and responsibilities.
+
+---
+
+## How to Get Started
+We have a dedicated guide to help you set up your machine. **Please follow this first to ensure your environment is ready:**
+
+**[Read the Setup Guide (SETUP.md)](./SETUP.md)**
+
+---
+
+## Project Structure
+This is a **monorepo**, meaning all the code for the website, the server, and the database lives in this one folder. Here is a map of the project to help you find your way:
+
+```text
+GradEval360/
+├── client/          # Frontend (React + Vite)
+│   ├── src/components/ # Reusable UI pieces (Buttons, Inputs, Sidebar)
+│   ├── src/pages/      # Full views (Login, Dashboard, Appointments)
+│   └── src/lib/        # Configuration (Auth client, API fetchers)
+├── server/          # Backend (Express.js)
+│   ├── src/db/         # Database schema, migrations, and seed data
+│   ├── src/routes/     # API endpoints (The URLs the frontend calls)
+│   └── src/middleware/ # Security checks (Checking if you are logged in)
+├── shared/          # Shared Logic (The "Glue")
+│   └── src/            # Data validation schemas used by both folders
+├── docker/          # Database configuration files
+└── docker-compose.yml  # The "Command Center" to start your database
+```
+
+---
 
 ## Tech Stack
-- [cite_start]**Frontend:** React (Vite) + shadcn/ui + React Query 
-- [cite_start]**Backend:** Node.js (Express) + Drizzle ORM 
-- [cite_start]**Database:** PostgreSQL (Running in Docker) 
-- [cite_start]**Auth:** Better-auth (Okta OIDC Integration) 
+We use modern, industry-standard tools. If you are new to these, don't worry! Each sprint is designed to help you learn them piece-by-piece.
 
-## Getting Started
-
-### 1. Prerequisites
-- Install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-- Install [Node.js](https://nodejs.org/) (v18 or higher)
-
-### 2. Database Setup
-Spin up the PostgreSQL database and pgAdmin:
-```bash
-docker-compose up -d
-```
+- **Frontend:** React + shadcn/ui (Beautiful, accessible UI components).
+- **Backend:** Node.js + Drizzle ORM (A simple way to talk to our database using TypeScript).
+- **Database:** PostgreSQL (Running inside a Docker container).
+- **Authentication:** Better-auth (Handles our Mock Okta / OIDC login flow).
