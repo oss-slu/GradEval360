@@ -10,7 +10,7 @@ Our goal for this semester is to complete the **Expectation Setting** workflow. 
 ## How to Get Started
 We have a dedicated guide to help you set up your machine. **Please follow this first to ensure your environment is ready:**
 
-**[Read the Setup Guide (SETUP.md)](./SETUP.md)**
+**[Read the Setup Guide (SETUP.md)](./setup.md)**
 
 ---
 
