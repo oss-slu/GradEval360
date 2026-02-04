@@ -1,5 +1,5 @@
 import { pgTable, uuid, text, timestamp, jsonb, pgEnum } from 'drizzle-orm/pg-core';
-import { UserRoleEnum } from "../../../shared/src/types.js";
+import { UserRoleEnum } from "../../../shared/src/types";
 
 // Enum for the 3-part annual cycle
 export const statusEnum = pgEnum('status', [
