@@ -10,8 +10,22 @@ Before setting up the project, ensure your machine has the necessary tools. Run 
 
 ### A. Node.js (v20.x or higher)
 The runtime for our backend and frontend.
-* **Verify:** `node -v`
+* **Verify:** `node -v` and `npm -v`
 * **Install:** [Node](https://nodejs.org/en/download)
+For windows users: We can go to above link and download the Windows installer (.msi) for the latest LTS version of Node.js. Run the installer and follow the prompts to complete the installation.
+
+For macOS users, you can also use Homebrew or go to above linlk and do nvm installation. We recommend using nvm to manage Node versions, especially if you work on multiple projects.:
+```bash
+# Download and install nvm:
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+
+# in lieu of restarting the shell
+\. "$HOME/.nvm/nvm.sh"
+
+# Download and install Node.js:
+nvm install 24
+
+```
 
 ### B. Docker Desktop
 Required to run the PostgreSQL database and pgAdmin containers.
@@ -25,6 +39,7 @@ For version control and pulling the repository.
 * **Install (Windows):** [Download Git](https://git-scm.com/install/)
 
 ### D. TypeScript (Global)
+* **Verify:** `tsc --version`
 While we use local project dependencies, having the global compiler is helpful for CLI tools.
 * **Install:** `npm install -g typescript`
 ---
