@@ -38,7 +38,7 @@ jobs:
         run: npm ci
 
       - name: Build Shared Module
-        run: cd shared && npx tsc
+        run: cd shared && npm run build
 
       - name: Run Tests
         run: npm test
