@@ -49,14 +49,10 @@ We use a monorepo-style structure. To keep the environment stable, always use `n
 git clone https://github.com/oss-slu/GradEval360.git
 cd GradEval360
 
-# 2. Install Shared Schemas
-cd shared && npm ci
+# 2. Synchronize all workspaces (Root, Client, Server, Shared)
+# This uses the root package-lock.json to manage the entire monorepo
+npm ci
 
-# 3. Install Backend Server
-cd ../server && npm ci
-
-# 4. Install Frontend Client
-cd ../client && npm ci
 ```
 
 ---
@@ -104,8 +100,7 @@ npm run seed           # Adds initial team users
 
 ### Daily Workflow (To avoid Lockfile Conflicts)
 1. `git pull`
-2. `npm ci` (in the relevant folder). Do not commit changes to package-lock.json unless you have added a new dependency.
-3. If shared types change: `cd shared && npm run build`.
+2. `npm ci` (in the root folder). Do not commit changes to package-lock.json unless you have added a new dependency.
 
 ### Development Workflow
 - Backend: `cd server && npm run dev`
@@ -119,6 +114,11 @@ Verify your setup by visiting these local endpoints to ensure all services are c
 | **User API** | [http://localhost:3000/api/me](http://localhost:3000/api/me) | **401 Unauthorized** (Security is working) |
 | **Database UI** | [http://localhost:8080](http://localhost:8080) | **Login:** `admin@gradeval.com` / `admin` |
 
+## 6. Testing
+Run the automated test suite from the root to confirm everything is functional:
+```bash
+npm test
+```
 
 ### Quick Troubleshooting
 * **Connection Refused:** Ensure your local server or Docker containers are running on ports `3000` and `8080`.
