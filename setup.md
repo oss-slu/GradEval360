@@ -53,6 +53,10 @@ cd GradEval360
 # This uses the root package-lock.json to manage the entire monorepo
 npm ci
 
+# 3. Build the Shared Schemas
+# This compiles TypeScript into the .js files needed for module resolution
+cd shared && npm run build
+
 ```
 
 ---
@@ -101,6 +105,7 @@ npm run seed           # Adds initial team users
 ### Daily Workflow (To avoid Lockfile Conflicts)
 1. `git pull`
 2. `npm ci` (in the root folder). Do not commit changes to package-lock.json unless you have added a new dependency.
+3. `npm run build` in \shared folder for Build Shared.
 
 ### Development Workflow
 - Backend: `cd server && npm run dev`
