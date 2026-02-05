@@ -1,5 +1,6 @@
 import { db } from './index.js';
 import { users, appointments } from './schema.js';
+import type { InferInsertModel } from 'drizzle-orm';
 
 async function seed() {
   console.log('Starting safe seeding process...');
@@ -31,54 +32,55 @@ async function seed() {
   const daniel = findUser('daniel.shown@slu.edu');
   const sritam = findUser('sritammiraja.iragavarapu@slu.edu');
 
+  type NewAppointment = InferInsertModel<typeof appointments>;
+
   if (prem && darcy && elizabeth && daniel && sritam) {
     // Define your data with 'as const' to satisfy the strict enum types
-    const appointmentData = [
+    const appointmentData : NewAppointment[] = [
       {
         gaId: darcy.id,
         mentorId: daniel.id,
         unitId: 'CS-DEPT-2026',
         status: 'AwaitingExpectationSetting' as const, 
-        data: {}
+        expectationData: null,
+        midYearData: null,
+        finalEvaluationData: null
       },
       {
         gaId: elizabeth.id,
         mentorId: prem.id,
         unitId: 'MATH-DEPT-2026',
         status: 'ExpectationSet' as const,
-        data: {
-          expectations: {
-            goals: ["Master React Query", "Implement Zod Validation"],
-            weeklyHours: 20,
-            responsibilities: "Lead frontend development for the GradEval project."
-          }
-        }
+        expectationData: {
+          goals: ["Master React Query", "Implement Zod Validation"],
+          weeklyHours: 20,
+          responsibilities: "Lead frontend development for the GradEval project."
+        },
+        midYearData: null,
+        finalEvaluationData: null
       },
       {
         gaId: darcy.id,
         mentorId: sritam.id,
         unitId: 'BIO-DEPT-2026',
         status: 'MidYearCompleted' as const,
-        data: {
-          expectations: { goals: ["Research Assistance"], weeklyHours: 15 },
-          midYear: { 
-            performance: "Exceeding expectations", 
-            feedback: "Great progress on data collection." 
-          }
-        }
+        expectationData: { goals: ["Research Assistance"], weeklyHours: 15 },
+        midYearData: { 
+          performance: "Exceeding expectations", 
+          feedback: "Great progress on data collection." 
+        },
+        finalEvaluationData: null
       },
       {
         gaId: elizabeth.id,
         mentorId: daniel.id,
         unitId: 'PHYS-DEPT-2026',
         status: 'FinalEvaluated' as const,
-        data: {
-          expectations: { goals: ["Lab Maintenance"] },
-          midYear: { performance: "Satisfactory" },
-          final: { 
-            grade: "A", 
-            summary: "Completed all lab duties with high precision." 
-          }
+        expectationData: { goals: ["Lab Maintenance"] },
+        midYearData: { performance: "Satisfactory" },
+        finalEvaluationData: { 
+          grade: "A", 
+          summary: "Completed all lab duties with high precision." 
         }
       }
     ];
