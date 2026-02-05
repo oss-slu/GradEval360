@@ -9,6 +9,22 @@ export const statusEnum = pgEnum('status', [
   'FinalEvaluated'
 ]);
 
+interface Expectation {
+  goals: string[];
+  weeklyHours?: number;
+  responsibilities?: string;
+}
+
+interface MidYear {
+  performance: string;
+  feedback?: string;
+}
+
+interface FinalEval {
+  grade: string;
+  summary: string;
+}
+
 // Pass the Zod options to Postgres Enum
 export const roleEnum = pgEnum("user_role", UserRoleEnum.options as [string, ...string[]]);
 
@@ -28,9 +44,9 @@ export const appointments = pgTable('appointments', {
   status: statusEnum('status').default('AwaitingExpectationSetting'),
   
   // Hybrid Data Strategy: JSONB for flexible form questions 
-  expectationData: jsonb('expectation_data'), 
-  midYearData: jsonb('mid_year_data'),
-  finalEvaluationData: jsonb('final_evaluation_data'),
+  expectationData: jsonb('expectation_data').$type<Expectation>(), 
+  midYearData: jsonb('mid_year_data').$type<MidYear>(),
+  finalEvaluationData: jsonb('final_evaluation_data').$type<FinalEval>(),
   
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
