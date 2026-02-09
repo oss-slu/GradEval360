@@ -16,7 +16,7 @@ git add .
 
 git commit -m "your message here"
 
-git push -u origin feature/your-issue-id
+git push -u origin feature/your-issue-id (if it's your first push. Do "git push" for every push after that.)
 
 Then, go to GitHub and create a pull request, assign the tech lead to review it, and inform the tech lead via the Slack chanel.
 
