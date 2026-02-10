@@ -25,5 +25,4 @@ At the end of each sprint, the issue assigned should be completed. Halfway throu
 # Communication:
 
 Team members must communicate and ask for assistance via Slack as the main form of communication. In the case of people not responding to Slack, team mates may use the texting group chat to remind everyone to look at the slack channel. 
-The "2-Hour Wall": If a developer is stuck on a technical error for more than 2 hours,
-they must escalate the issue via Slack for assistance.
+The "2-Hour Wall": If a developer is stuck on a technical error for more than 2 hours, they must escalate the issue via Slack for assistance.
