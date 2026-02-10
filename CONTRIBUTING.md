@@ -1,28 +1,82 @@
-# Workflow:
+# Contributing Guidelines
 
-*Branching Strategy:*
+This document outlines the workflow and standards for all contributors to this project. Please follow these steps to ensure a smooth development process.
 
-For each issue, create a branch from the issue page, that way the branch will link to the issue itself.
+---
 
-Then, work on your issue in this branch. When you are finished, type:
+## 🚀 Workflow
 
+### Branching Strategy
+To keep our project organized, we link all code changes directly to issues.
+
+1. **Create Branch:**  
+   Navigate to the specific GitHub Issue page and use the **"Create a branch"** link in the sidebar.
+
+2. **Sync Locally:**  
+   Pull the new branch to your machine:
+
+   ```bash
+   git fetch origin
+   git checkout <your-branch-name>
+   ```
+
+3. **Work:**  
+   Commit your changes locally using descriptive messages.
+
+---
+
+## 📤 Submission Process
+
+When you are ready to submit your work:
+
+### 1. Push to GitHub
+
+```bash
 git add .
+git commit -m "Briefly describe your changes"
+git push -u origin <your-branch-name>
+```
 
-git commit -m "your message here"
+> **Note:** For all subsequent pushes to the same branch, a simple `git push` will suffice.
 
-git push -u origin feature/your-issue-id (if it's your first push. Do "git push" for every push after that.)
+---
 
-Then, go to GitHub and create a pull request, assign the tech lead to review it, and inform the tech lead via the Slack chanel. When you make your pull request, you should add a descriptive comment to the request, explaining everything that you did for that request.
+### 2. Open a Pull Request (PR)
 
-*Merege Policy:*
+- Go to the repository on GitHub and click **"Compare & pull request"**.
+- **Reviewers:** Assign the Tech Lead to review.
+- **Description:** Add a descriptive comment explaining what you did.  
+  Use the phrase `Closes #123` (replace 123 with your issue number) to link the issue.
+- **Notify:** Send a link to the PR in the team Slack channel.
 
-Nobody is allowed to merge anything except the tech lead. The tech lead will merge everyone's branch after he approves of it.
+---
 
-# Standards:
+> ⚠️ **CAUTION — Merge Policy**  
+> Only the Tech Lead is authorized to merge branches into the main codebase.  
+> Do **not** merge your own PR.
 
-At the end of each sprint, the issue assigned should be completed. Halfway through the sprint, a pull request with at least a decent amount of work should be done. This is so that the tech lead can assist in any areas where you are struggling, or can give you advice on what to do from that point forward.
+---
 
-# Communication:
+## 📋 Standards & Expectations
 
-Team members must communicate and ask for assistance via Slack as the main form of communication. In the case of people not responding to Slack, team mates may use the texting group chat to remind everyone to look at the slack channel. 
-The "2-Hour Wall": If a developer is stuck on a technical error for more than 2 hours, they must escalate the issue via Slack for assistance.
+### Sprint Deadlines
+
+- **Completion:** All assigned issues must be completed by the end of the sprint.
+- **Mid-Sprint PR:** You are required to have a Pull Request opened with at least **50% completion** halfway through the sprint.  
+  This allows the Tech Lead to provide guidance and ensure you aren't stuck on the wrong track.
+
+---
+
+## 💬 Communication
+
+Effective communication is key to our success.
+
+- **Primary Channel:** Slack is our main hub for technical discussion and assistance. [Slack](https://oss-slu.slack.com/archives/C0AB0SMMAKY)
+- **Emergency Only:** If a teammate is unresponsive on Slack, you may use the texting group chat to nudge them to check Slack.
+- **The "2-Hour Wall":**  
+  If you are stuck on a technical error or blocker for more than **2 hours**, you must escalate the issue in Slack.  
+  Do not waste a full day on a single bug without asking for help!
+
+---
+
+**Questions?** Reach out to the Tech Lead on Slack.
