@@ -1,4 +1,4 @@
-// client/src/components/app-sidebar.tsx
+import { LayoutDashboard, CalendarDays } from "lucide-react"; // Import icons
 import {
   Sidebar,
   SidebarContent,
@@ -11,15 +11,15 @@ import {
 } from "@/components/ui/sidebar";
 
 const navItems = [
-  { label: "Dashboard", to: "/dashboard" },
-  { label: "My Appointments", to: "/appointments" },
+  { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
+  { label: "My Appointments", to: "/appointments", icon: CalendarDays },
 ];
 
 export function AppSidebar() {
   const pathname = window.location.pathname;
 
   return (
-    <Sidebar>
+    <Sidebar collapsible="icon"> {/* Enables the "Icon Rail" mode when collapsed */}
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>GradEval360</SidebarGroupLabel>
@@ -29,8 +29,11 @@ export function AppSidebar() {
                 const isActive = pathname.startsWith(item.to);
                 return (
                   <SidebarMenuItem key={item.to}>
-                    <SidebarMenuButton asChild isActive={isActive}>
-                      <a href={item.to}>{item.label}</a>
+                    <SidebarMenuButton asChild isActive={isActive} tooltip={item.label}>
+                      <a href={item.to}>
+                        <item.icon className="h-4 w-4" /> {/* Icon is now visible */}
+                        <span>{item.label}</span>
+                      </a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
