@@ -38,7 +38,7 @@ const healthHandler = async (req: express.Request, res: express.Response) => {
 app.get('/health', healthHandler);
 app.get('/api/health', healthHandler);
 
-// Compatibility route for Mock Okta sign-in flow described in GE360-01.
+// Compatibility route for Mock Okta sign-in flow.
 app.get("/api/auth/signin/okta", (_req, res) => {
   const callbackURL = process.env.OKTA_POST_LOGIN_REDIRECT_URL || "http://localhost:5173";
   const redirectScriptSrc = `/api/auth/signin/okta/redirect.js?callbackURL=${encodeURIComponent(callbackURL)}`;
