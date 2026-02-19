@@ -8,6 +8,7 @@
     "db:setup": "npm run db:push && npm run seed",
     "dev": "tsx watch src/index.ts",
     "smoke:auth": "tsx src/scripts/auth-smoke.ts",
+    "test:integration": "tsx src/scripts/integration-test.ts",
     "seed": "tsx src/db/seed.ts",
     "db:push": "npx drizzle-kit push",
     "build": "tsc",

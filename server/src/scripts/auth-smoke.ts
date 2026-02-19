@@ -1,3 +1,5 @@
+export {};
+
 type JsonObject = Record<string, unknown>;
 
 const baseURL = process.env.AUTH_SMOKE_BASE_URL ?? "http://localhost:3000";
@@ -72,4 +74,3 @@ run().catch((error) => {
   console.error(error);
   process.exit(1);
 });
-
