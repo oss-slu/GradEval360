@@ -88,8 +88,10 @@ OKTA_CLIENT_ID=your_okta_client_id
 OKTA_CLIENT_SECRET=your_okta_client_secret
 
 # Auth Settings
+OKTA_POST_LOGIN_REDIRECT_URL=http://localhost:5173
 BETTER_AUTH_SECRET=a_long_random_string_here
 BETTER_AUTH_URL=http://localhost:3000
+
 ```
 
 ---
