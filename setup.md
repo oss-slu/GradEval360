@@ -65,6 +65,19 @@ cd shared && npm run build
 The application requires specific secrets for Okta and Database communication. Create a `.env` file in the `server` directory.
 File: `server/.env`
 
+### Generate `BETTER_AUTH_SECRET`
+Create a secure random secret locally (choose one command):
+
+```bash
+# Option 1: Node.js
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+
+# Option 2: OpenSSL
+openssl rand -base64 32
+```
+
+Copy the generated value into `BETTER_AUTH_SECRET` in `server/.env`.
+
 ```bash
 # Database Connection
 DATABASE_URL=postgresql://user:password@localhost:5432/gradeval360
@@ -134,4 +147,3 @@ npm test
 - pgAdmin "Service not found": If you get a connection error in pgAdmin, right-click the GradEval-Local server, go to Properties > Connection, and ensure the Service field is empty and the Host is set to `db`.
 - TypeScript Red Lines: If VS Code shows errors in the `shared` folder, run `Cmd + Shift + P` and select "TypeScript: Restart TS Server".
 - Clean Reset: If your database becomes inconsistent, run `docker-compose down -v` to wipe the volumes and restart from Step 4.
-
