@@ -1,32 +1,35 @@
-// client/src/App.tsx
-import "./App.css";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
-import { AppHeader } from "@/components/app-header";
+import { useState } from 'react'
+import reactLogo from './assets/react.svg'
+import viteLogo from '/vite.svg'
+import './App.css'
 
 function App() {
+  const [count, setCount] = useState(0)
+
   return (
-    <SidebarProvider>
-
-      
-      <div className="flex min-h-screen w-full">
-        <AppSidebar />
-
-        <div className="flex w-full flex-col">
-          <AppHeader />
-
-          <main className="flex-1 p-4">
-            * Placeholder until real pages/routes exist *
-            <h1 className="text-xl font-semibold">Dashboard</h1>
-            <p className="text-muted-foreground">
-              //This is the app shell. Pages can be empty for now.
-            </p>
-          </main>
-        </div>
+    <>
+      <div>
+        <a href="https://vite.dev" target="_blank">
+          <img src={viteLogo} className="logo" alt="Vite logo" />
+        </a>
+        <a href="https://react.dev" target="_blank">
+          <img src={reactLogo} className="logo react" alt="React logo" />
+        </a>
       </div>
-    </SidebarProvider>
-  );
+      <h1>Vite + React</h1>
+      <div className="card">
+        <button onClick={() => setCount((count) => count + 1)}>
+          count is {count}
+        </button>
+        <p>
+          Edit <code>src/App.tsx</code> and save to test HMR
+        </p>
+      </div>
+      <p className="read-the-docs">
+        Click on the Vite and React logos to learn more
+      </p>
+    </>
+  )
 }
 
-export default App;
-
+export default App

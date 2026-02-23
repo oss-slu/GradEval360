@@ -39,6 +39,11 @@ git config --global core.autocrlf true
 * **Verify:** `tsc --version`
 While we use local project dependencies, having the global compiler is helpful for CLI tools.
 * **Install:** `npm install -g typescript`
+
+### E. Okta Developer Account
+You need access to the team Mock Okta app credentials.
+If you are setting up Okta from scratch, use:
+- `OKTA_SETUP_AND_SMOKE_TEST.md`
 ---
 
 ## 2. Initial Installation
@@ -56,6 +61,7 @@ npm ci
 # 3. Build the Shared Schemas
 # This compiles TypeScript into the .js files needed for module resolution
 cd shared && npm run build
+cd ..
 
 ```
 
@@ -65,18 +71,33 @@ cd shared && npm run build
 The application requires specific secrets for Okta and Database communication. Create a `.env` file in the `server` directory.
 File: `server/.env`
 
+### Generate `BETTER_AUTH_SECRET`
+Create a secure random secret locally (choose one command):
+
+```bash
+# Option 1: Node.js
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+
+# Option 2: OpenSSL
+openssl rand -base64 32
+```
+
+Copy the generated value into `BETTER_AUTH_SECRET` in `server/.env`.
+
 ```bash
 # Database Connection
 DATABASE_URL=postgresql://user:password@localhost:5432/gradeval360
 
 # Okta OIDC Configuration (Get these from the Tech Lead)
-OKTA_ISSUER_URL=[https://slu.okta.com](https://slu.okta.com)
+OKTA_ISSUER_URL=https://your-okta-domain.okta.com/oauth2/default
 OKTA_CLIENT_ID=your_okta_client_id
 OKTA_CLIENT_SECRET=your_okta_client_secret
 
 # Auth Settings
+OKTA_POST_LOGIN_REDIRECT_URL=http://localhost:5173
 BETTER_AUTH_SECRET=a_long_random_string_here
 BETTER_AUTH_URL=http://localhost:3000
+
 ```
 
 ---
@@ -88,14 +109,15 @@ We use Docker to ensure consistent environments.
 ```bash
 docker-compose up -d
 ```
-run `docker-compose down` to just stop the containers or run `docker-compose down -v` to wipe the volumes.
+Use:
+- `docker-compose down` to stop and remove containers
+- `docker-compose down -v` to stop/remove containers and wipe DB volumes (full reset)
 
 2. **Initialize the Database:** Sync your TypeScript models to the Postgres tables and add seed data.
 
 ```bash
 cd server
-npx drizzle-kit push   # Pushes schema to DB
-npm run seed           # Adds initial team users
+npm run db:setup
 ```
 
 ---
@@ -105,7 +127,7 @@ npm run seed           # Adds initial team users
 ### Daily Workflow (To avoid Lockfile Conflicts)
 1. `git pull`
 2. `npm ci` (in the root folder). Do not commit changes to package-lock.json unless you have added a new dependency.
-3. `npm run build` in \shared folder for Build Shared.
+3. `cd shared && npm run build`
 
 ### Development Workflow
 - Backend: `cd server && npm run dev`
@@ -115,9 +137,10 @@ Verify your setup by visiting these local endpoints to ensure all services are c
 
 | Service | URL | Expected Result |
 | :--- | :--- | :--- |
-| **Backend Health** | [http://localhost:3000/health](http://localhost:3000/health) | `{"status":"active", "dbConnection":"connected", "userCount": 5}` |
-| **User API** | [http://localhost:3000/api/me](http://localhost:3000/api/me) | **401 Unauthorized** (Security is working) |
+| **Backend Health** | [http://localhost:3000/api/health](http://localhost:3000/api/health) | `{"status":"active","dbConnection":"connected","userCount":5,...}` |
+| **User API** | [http://localhost:3000/api/me](http://localhost:3000/api/me) | **401 Unauthorized** (when not signed in) |
 | **Database UI** | [http://localhost:8080](http://localhost:8080) | **Login:** `admin@gradeval.com` / `admin` |
+| **Okta Login Start** | [http://localhost:3000/api/auth/signin/okta](http://localhost:3000/api/auth/signin/okta) | Redirect to Okta login page |
 
 ## 6. Testing
 Run the automated test suite from the root to confirm everything is functional:
@@ -125,13 +148,19 @@ Run the automated test suite from the root to confirm everything is functional:
 npm test
 ```
 
+Run auth smoke test from server:
+```bash
+cd server
+npm run smoke:auth
+```
+
 ### Quick Troubleshooting
 * **Connection Refused:** Ensure your local server or Docker containers are running on ports `3000` and `8080`.
 * **JSON Mismatch:** If `userCount` is not `5`, verify that your database seed script ran successfully.
 * **Login Issues:** Double-check that there are no trailing spaces in the credentials provided for the Database UI.
+* **Okta redirect errors:** Verify redirect URI and policy settings using `OKTA_SETUP_AND_SMOKE_TEST.md`.
 
 ## Troubleshooting
 - pgAdmin "Service not found": If you get a connection error in pgAdmin, right-click the GradEval-Local server, go to Properties > Connection, and ensure the Service field is empty and the Host is set to `db`.
 - TypeScript Red Lines: If VS Code shows errors in the `shared` folder, run `Cmd + Shift + P` and select "TypeScript: Restart TS Server".
 - Clean Reset: If your database becomes inconsistent, run `docker-compose down -v` to wipe the volumes and restart from Step 4.
-

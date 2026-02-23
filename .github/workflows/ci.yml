@@ -9,6 +9,14 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://user:password@localhost:5432/gradeval360
+      BETTER_AUTH_SECRET: ci_local_better_auth_secret_change_me
+      BETTER_AUTH_URL: http://localhost:3000
+      OKTA_ISSUER_URL: https://example.okta.com/oauth2/default
+      OKTA_CLIENT_ID: ci-client-id
+      OKTA_CLIENT_SECRET: ci-client-secret
+      OKTA_POST_LOGIN_REDIRECT_URL: http://localhost:5173
 
     services:
       postgres:
@@ -39,6 +47,41 @@ jobs:
 
       - name: Build Shared Module
         run: cd shared && npm run build
+
+      - name: Prepare Server DB
+        run: |
+          npm --prefix server run db:push
+          npm --prefix server run seed
+
+      - name: Build Server
+        run: npm --prefix server run build
+
+      - name: Start Server
+        run: |
+          npm --prefix server run start > server.log 2>&1 &
+          echo $! > server.pid
+
+      - name: Wait for Server
+        run: |
+          for i in {1..30}; do
+            if curl -fsS http://localhost:3000/api/health >/dev/null; then
+              echo "Server is up"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Server did not become ready in time. Dumping server.log:"
+          cat server.log
+          exit 1
+
+      - name: Run Server Integration Tests
+        run: npm --prefix server run test:integration
+
+      - name: Print Server Logs on Failure
+        if: failure()
+        run: |
+          echo "CI failure detected. Server logs:"
+          cat server.log || true
 
       - name: Run Tests
         run: npm test
