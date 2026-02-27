@@ -1,8 +1,14 @@
+import * as React from "react";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+
+import { authClient } from "@/lib/auth-client";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./components/app-sidebar";
 import { AppHeader } from "./components/app-header";
+import LoginPage from "@/pages/login";
+import { WelcomeBanner } from "@/components/dashboard/welcome-banner";
 
-export default function App() {
+function DashboardShell() {
   return (
     <SidebarProvider defaultOpen={false}>
       {/* Container must be h-screen w-screen to prevent black gaps */}
@@ -17,6 +23,9 @@ export default function App() {
                 <SidebarTrigger className="md:hidden" />
                 <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
               </div>
+
+              {/* ✅ Welcome banner goes at the top of main content */}
+              <WelcomeBanner />
               
               <div className="grid gap-6 md:grid-cols-3">
                 <div className="h-40 rounded-xl border-2 border-dashed bg-muted/50" />
@@ -30,4 +39,44 @@ export default function App() {
       </div>
     </SidebarProvider>
   );
+}
+
+function AppRoutes() {
+  const location = useLocation();
+  const { data: session, isPending } = useSession();
+
+  const isAuthed = !!session?.user;
+  const onLoginRoute = location.pathname === "/login";
+
+  // While session is loading, avoid redirect flicker.
+  if (isPending) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-slate-50/50">
+        <div className="text-sm text-muted-foreground">Loading session…</div>
+      </div>
+    );
+  }
+
+  // If not authed, force to /login (but allow seeing /login itself)
+  if (!isAuthed && !onLoginRoute) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // If authed and they hit /login, send them home
+  if (isAuthed && onLoginRoute) {
+    return <Navigate to="/" replace />;
+  }
+
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/" element={<DashboardShell />} />
+      {/* Optional: catch-all */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
+
+export default function App() {
+  return <AppRoutes />;
 }
