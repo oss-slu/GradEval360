@@ -6,7 +6,16 @@ import { Button } from "@/components/ui/button";
 export function AppHeader() {
   const { data: session } = authClient.useSession();
   const user = session?.user;
-  const oktaSignInURL = "http://localhost:3000/api/auth/signin/okta";
+  const oktaSignInURL = `http://localhost:3000/api/auth/signin/okta?callbackURL=${encodeURIComponent(
+    `${window.location.origin}/dashboard`
+  )}`;
+
+  async function handleLogout() {
+    await authClient.signOut();
+    localStorage.clear();
+    sessionStorage.clear();
+    window.location.assign("/login");
+  }
 
   const initials = user?.name
     ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase()
@@ -46,7 +55,7 @@ export function AppHeader() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => authClient.signOut()}
+              onClick={handleLogout}
               className="text-muted-foreground hover:text-destructive"
             >
               Logout

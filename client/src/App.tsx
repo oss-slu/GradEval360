@@ -59,10 +59,6 @@ function AppRoutes() {
     return <Navigate to="/login" replace />;
   }
 
-  if (isAuthed && onLoginRoute) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />

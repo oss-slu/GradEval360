@@ -1,5 +1,4 @@
 import * as React from "react";
-import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,19 +11,13 @@ import {
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
+  const oktaSignInURL = `http://localhost:3000/api/auth/signin/okta?callbackURL=${encodeURIComponent(
+    `${window.location.origin}/dashboard`
+  )}`;
 
-  async function handleOktaSignIn() {
+  function handleOktaSignIn() {
     setIsLoading(true);
-    setError(null);
-
-    try {
-      await authClient.signIn.social({ provider: "okta" });
-      // Usually redirects away; if it doesn't, session guard in App.tsx will handle it.
-    } catch (e) {
-      setError("Sign-in failed. Try again or check your Okta setup.");
-      setIsLoading(false);
-    }
+    window.location.assign(oktaSignInURL);
   }
 
   return (
@@ -46,13 +39,9 @@ export default function LoginPage() {
             {isLoading ? "Redirecting to Okta..." : "Sign in with Okta"}
           </Button>
 
-          {error ? (
-            <p className="text-sm text-destructive">{error}</p>
-          ) : (
-            <p className="text-xs text-muted-foreground">
-              You’ll be redirected to Okta to authenticate.
-            </p>
-          )}
+          <p className="text-xs text-muted-foreground">
+            You’ll be redirected to Okta to authenticate.
+          </p>
         </CardContent>
 
         <CardFooter className="text-xs text-muted-foreground">
