@@ -4,6 +4,7 @@ import { authClient } from "@/lib/auth-client";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./components/app-sidebar";
 import { AppHeader } from "./components/app-header";
+import ProtectedRoute from "./components/auth/protected-route";
 import LoginPage from "@/pages/login";
 import { WelcomeBanner } from "@/components/dashboard/welcome-banner";
 
@@ -12,22 +13,19 @@ const { useSession } = authClient;
 function DashboardShell() {
   return (
     <SidebarProvider defaultOpen={false}>
-      {/* Container must be h-screen w-screen to prevent black gaps */}
       <div className="flex h-screen w-screen bg-background overflow-hidden">
         <AppSidebar />
         <SidebarInset className="flex flex-col flex-1 min-w-0 h-full">
           <AppHeader />
-          {/* Main content area should be scrollable */}
-          <main className="flex-1 overflow-y-auto p-8 bg-slate-50/50"> 
+          <main className="flex-1 overflow-y-auto p-8 bg-slate-50/50">
             <div className="mx-auto max-w-6xl">
               <div className="flex items-center gap-4 mb-6">
                 <SidebarTrigger className="md:hidden" />
                 <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
               </div>
 
-              {/* ✅ Welcome banner goes at the top of main content */}
               <WelcomeBanner />
-              
+
               <div className="grid gap-6 md:grid-cols-3">
                 <div className="h-40 rounded-xl border-2 border-dashed bg-muted/50" />
                 <div className="h-40 rounded-xl border-2 border-dashed bg-muted/50" />
@@ -49,31 +47,26 @@ function AppRoutes() {
   const isAuthed = !!session?.user;
   const onLoginRoute = location.pathname === "/login";
 
-  // While session is loading, avoid redirect flicker.
   if (isPending) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-slate-50/50">
-        <div className="text-sm text-muted-foreground">Loading session…</div>
+        <div className="text-sm text-muted-foreground">Loading session...</div>
       </div>
     );
   }
 
-  // If not authed, force to /login (but allow seeing /login itself)
   if (!isAuthed && !onLoginRoute) {
     return <Navigate to="/login" replace />;
-  }
-
-  // If authed and they hit /login, send them home
-  if (isAuthed && onLoginRoute) {
-    return <Navigate to="/" replace />;
   }
 
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/" element={<DashboardShell />} />
-      {/* Optional: catch-all */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route element={<ProtectedRoute />}>
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/dashboard" element={<DashboardShell />} />
+      </Route>
+      <Route path="*" element={<Navigate to={isAuthed ? "/dashboard" : "/login"} replace />} />
     </Routes>
   );
 }
