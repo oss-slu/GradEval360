@@ -4,6 +4,7 @@ import { authClient } from "@/lib/auth-client";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./components/app-sidebar";
 import { AppHeader } from "./components/app-header";
+import ProtectedRoute from "./components/auth/protected-route";
 import LoginPage from "@/pages/login";
 import { WelcomeBanner } from "@/components/dashboard/welcome-banner";
 
@@ -59,14 +60,17 @@ function AppRoutes() {
   }
 
   if (isAuthed && onLoginRoute) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/" element={<DashboardShell />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route element={<ProtectedRoute />}>
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/dashboard" element={<DashboardShell />} />
+      </Route>
+      <Route path="*" element={<Navigate to={isAuthed ? "/dashboard" : "/login"} replace />} />
     </Routes>
   );
 }

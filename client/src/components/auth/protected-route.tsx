@@ -1,22 +1,21 @@
-
 import { Navigate, Outlet } from "react-router-dom";
+import type { ReactNode } from "react";
 import { authClient } from "@/lib/auth-client";
 
-export default function ProtectedRoute(){
-    const { data: session, isPending } = authClient.useSession();
+type ProtectedRouteProps = {
+  children?: ReactNode;
+};
 
-    //Loading state
-    if (isPending) {
-        return <div>Loading...</div>;
-    }
+export default function ProtectedRoute({ children }: ProtectedRouteProps) {
+  const { data: session, isPending } = authClient.useSession();
 
-    //Not authenticaticated
-    if (!session) {
-        return <Navigate to= "/login" replace />;
-    }
+  if (isPending) {
+    return <div>Loading...</div>;
+  }
 
-    //Authenticated
-    return <Outlet />;
+  if (!session?.user) {
+    return <Navigate to="/login" replace />;
+  }
 
-
+  return children ?? <Outlet />;
 }
