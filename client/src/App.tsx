@@ -1,4 +1,3 @@
-import * as React from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 
 import { authClient } from "@/lib/auth-client";
@@ -7,6 +6,8 @@ import { AppSidebar } from "./components/app-sidebar";
 import { AppHeader } from "./components/app-header";
 import LoginPage from "@/pages/login";
 import { WelcomeBanner } from "@/components/dashboard/welcome-banner";
+
+const { useSession } = authClient;
 
 function DashboardShell() {
   return (

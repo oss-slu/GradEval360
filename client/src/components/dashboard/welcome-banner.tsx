@@ -1,6 +1,8 @@
 import { authClient } from "@/lib/auth-client";
 import { Badge } from "@/components/ui/badge";
 
+const { useSession } = authClient;
+
 function normalizeRole(role: unknown): string {
   if (!role) return "User";
   const r = String(role).trim();
