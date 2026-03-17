@@ -86,7 +86,7 @@ Copy the generated value into `BETTER_AUTH_SECRET` in `server/.env`.
 
 ```bash
 # Database Connection
-DATABASE_URL=postgresql://user:password@localhost:5432/gradeval360
+DATABASE_URL=postgres://user:password@localhost:5432/gradeval360
 
 # Okta OIDC Configuration (Get these from the Tech Lead)
 OKTA_ISSUER_URL=https://your-okta-domain.okta.com/oauth2/default
