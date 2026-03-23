@@ -86,15 +86,22 @@ export const authVerifications = pgTable("verification", {
 
 export const appointments = pgTable('appointments', {
   id: uuid('id').primaryKey().defaultRandom(),
-  gaId: uuid('ga_id').references(() => users.id),
-  mentorId: uuid('mentor_id').references(() => users.id),
+
+  gaId: uuid('ga_id').references(() => users.id).notNull(),
+  mentorId: uuid('mentor_id').references(() => users.id).notNull(),
   unitId: text('unit_id').notNull(), // For departmental tracking
-  status: statusEnum('status').default('AwaitingExpectationSetting'),
+  status: statusEnum('status').default('AwaitingExpectationSetting').notNull(),
   
   // Hybrid Data Strategy: JSONB for flexible form questions 
-  expectationData: jsonb('expectation_data').$type<Expectation>(), 
-  midYearData: jsonb('mid_year_data').$type<MidYear>(),
-  finalEvaluationData: jsonb('final_evaluation_data').$type<FinalEval>(),
+  expectationData: jsonb('expectation_data').$type<Expectation>()
+    .default({} as any)
+    .notNull(), 
+
+  midYearData: jsonb('mid_year_data').$type<MidYear>()
+    .default({} as any)
+    .notNull(),
+
+  finalEvaluationData: jsonb('final_evaluation_data').$type<FinalEval>(). default({} as any).notNull(),
   
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),

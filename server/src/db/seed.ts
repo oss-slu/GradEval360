@@ -42,9 +42,9 @@ async function seed() {
         mentorId: daniel.id,
         unitId: 'CS-DEPT-2026',
         status: 'AwaitingExpectationSetting' as const, 
-        expectationData: null,
-        midYearData: null,
-        finalEvaluationData: null
+        expectationData: {} as any,
+        midYearData: {} as any,
+        finalEvaluationData: {} as any
       },
       {
         gaId: elizabeth.id,
@@ -56,8 +56,8 @@ async function seed() {
           weeklyHours: 20,
           responsibilities: "Lead frontend development for the GradEval project."
         },
-        midYearData: null,
-        finalEvaluationData: null
+        midYearData: {} as any,
+        finalEvaluationData: {} as any
       },
       {
         gaId: darcy.id,
@@ -69,7 +69,7 @@ async function seed() {
           performance: "Exceeding expectations", 
           feedback: "Great progress on data collection." 
         },
-        finalEvaluationData: null
+        finalEvaluationData: {} as any
       },
       {
         gaId: elizabeth.id,
