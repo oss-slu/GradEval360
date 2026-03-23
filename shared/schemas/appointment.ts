@@ -1,3 +1,4 @@
+import { appointments } from 'src/db/schema';
 import { z } from 'zod';
 
 // The specific data captured during the first phase of the GA cycle
@@ -20,3 +21,20 @@ export const APPOINTMENT_STATUS = {
   MID_YEAR: 'MidYearCompleted',
   FINAL: 'FinalEvaluated',
 } as const;
+
+export const AppointmentSchema = z.object({
+
+  id: z.string().uuid(),
+
+  gaId: z.string().uuid(),
+  mentorId: z.string().uuid(),
+  unitId: z.string(),
+
+  status: z.string(),
+
+  expectationData: z.any(),
+  midYearData: z.any(),
+  finalEvaluationData: z.any(), 
+});
+
+export type Appointment = z.infer<typeof AppointmentSchema>;
