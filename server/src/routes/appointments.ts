@@ -1,14 +1,13 @@
 import { Router } from "express";
 import { db } from "../db/index.js";
-import { appointments, users } from "../db/schema.js";
-import { eq } from "drizzle-orm";
-import { requireAuth } from "../middleware/auth"; // adjust path if needed
-
+import { appointments } from "../db/schema.js";
+import { eq, or } from "drizzle-orm";
+import { requireAuth } from "../middleware/auth.js"; // adjust path if needed
 
 const router = Router();
 
 // Get api/appointments>
-router.get("/", async (requestAnimationFrame, res) =>{
+router.get("/", requireAuth, async (req: any, res) => {    
     try {
         const user = req.user;
 
@@ -19,15 +18,20 @@ router.get("/", async (requestAnimationFrame, res) =>{
             result = await db
                 .select()
                 .from(appointments)
-                .where(eq(appointments.ga_id, user.id));
+                .where(
+                    or(
+                        eq(appointments.gaId, user.id),
+                        eq(appointments.mentorId, user.id)
+                    )
+                );
         }
 
         //Mentor - Apointments they supervise
-        else if (user.role === "Admin") {
+        else if (user.role === "Mentor") {
             result = await db
                 .select()
                 .from(appointments)
-                .where(eq(appointments.mentor_id, user.id));
+                .where(eq(appointments.mentorId, user.id));
         }
 
         //Admin - appointments 
@@ -35,7 +39,6 @@ router.get("/", async (requestAnimationFrame, res) =>{
             result = await db
                 .select()
                 .from(appointments)
-                .where(eq(appointments.unit_id, user.unit_id));
         }
 
         //Those with no UNKNOW ROLE
@@ -49,3 +52,5 @@ router.get("/", async (requestAnimationFrame, res) =>{
         return res.status(500).json({error: "Server error"});
     } 
 });
+
+export default router;

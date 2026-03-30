@@ -101,7 +101,7 @@ export const appointments = pgTable('appointments', {
     .default({} as any)
     .notNull(),
 
-  finalEvaluationData: jsonb('final_evaluation_data').$type<FinalEval>(). default({} as any).notNull(),
+  finalEvaluationData: jsonb('final_evaluation_data').$type<FinalEval>().default({} as any).notNull(),
   
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),

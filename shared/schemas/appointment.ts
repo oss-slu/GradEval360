@@ -1,4 +1,4 @@
-import { appointments } from 'src/db/schema';
+
 import { z } from 'zod';
 
 // The specific data captured during the first phase of the GA cycle
