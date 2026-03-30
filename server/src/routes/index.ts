@@ -1,7 +1,7 @@
 import { Router } from "express";
 import userRouter from "./user.js";
 
-import appointmentsRoutes from "./appointments";
+import appointmentsRoutes from "./appointments.js";
 
 const rootRouter = Router();
 
@@ -12,4 +12,3 @@ rootRouter.use("/appointments", appointmentsRoutes);
 // Future: rootRouter.use("/appointments", appointmentRouter);
 
 export default rootRouter;
-

@@ -33,7 +33,14 @@ export const users = pgTable('users', {
   email: text('email').notNull().unique(),
   fullName: text('full_name').notNull(),
   role: roleEnum("role").notNull().default("GA"),
+  unitId: text('unit_id'),
   createdAt: timestamp('created_at').defaultNow(),
+});
+
+export const userUnits = pgTable('user_units', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id),
+  unitId: text('unit_id').notNull(),
 });
 
 // Better Auth tables (kept separate from app-domain "users")
