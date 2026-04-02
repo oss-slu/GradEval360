@@ -1,16 +1,16 @@
 import { db } from './index.js';
-import { users, appointments } from './schema.js';
+import { users, appointments, userUnits } from './schema.js';
 import type { InferInsertModel } from 'drizzle-orm';
 
 async function seed() {
   console.log('Starting safe seeding process...');
 
   const teamData = [
-    { email: 'premkiran.polepalli@slu.edu', fullName: 'Prem Kiran', role: 'Admin' as const},
-    { email: 'darcy.mupenda@slu.edu', fullName: 'Darcy Mupenda', role: 'GA' as const},
-    { email: 'elizabeth.dreste@slu.edu', fullName: 'Elizabeth Dreste', role: 'GA' as const},
-    { email: 'daniel.shown@slu.edu', fullName: 'Daniel Shown', role: 'Mentor' as const},
-    { email: 'sritammiraja.iragavarapu@slu.edu', fullName: 'Sritammiraja Iragavarapu', role: 'Mentor' as const}
+    { email: 'premkiran.polepalli@slu.edu', fullName: 'Prem Kiran', role: 'Admin' as const, unitId: 'MATH-DEPT-2026' },
+    { email: 'darcy.mupenda@slu.edu', fullName: 'Darcy Mupenda', role: 'GA' as const, unitId: null },
+    { email: 'elizabeth.dreste@slu.edu', fullName: 'Elizabeth Dreste', role: 'GA' as const, unitId: null },
+    { email: 'daniel.shown@slu.edu', fullName: 'Daniel Shown', role: 'Mentor' as const, unitId: 'MATH-DEPT-2026' },
+    { email: 'sritammiraja.iragavarapu@slu.edu', fullName: 'Sritammiraja Iragavarapu', role: 'Mentor' as const, unitId: 'CS-DEPT-2026' }
   ];
 
   // 1. Seed/Update Users
@@ -19,7 +19,7 @@ async function seed() {
       .values(user)
       .onConflictDoUpdate({
         target: users.email,
-        set: { fullName: user.fullName, role: user.role }
+        set: { fullName: user.fullName, role: user.role, unitId: user.unitId }
       });
   }
 
@@ -35,20 +35,31 @@ async function seed() {
   type NewAppointment = InferInsertModel<typeof appointments>;
 
   if (prem && darcy && elizabeth && daniel && sritam) {
+    const unitAssignments = [
+      { userId: darcy.id, unitId: 'CS-DEPT-2026' },
+      { userId: darcy.id, unitId: 'MATH-DEPT-2026' },
+      { userId: elizabeth.id, unitId: 'MATH-DEPT-2026' },
+      { userId: elizabeth.id, unitId: 'CS-DEPT-2026' },
+    ];
+
+    for (const assignment of unitAssignments) {
+      await db.insert(userUnits).values(assignment).onConflictDoNothing();
+    }
+
     // Define your data with 'as const' to satisfy the strict enum types
     const appointmentData : NewAppointment[] = [
       {
         gaId: darcy.id,
-        mentorId: daniel.id,
+        mentorId: sritam.id,
         unitId: 'CS-DEPT-2026',
         status: 'AwaitingExpectationSetting' as const, 
-        expectationData: null,
-        midYearData: null,
-        finalEvaluationData: null
+        expectationData: {} as any,
+        midYearData: {} as any,
+        finalEvaluationData: {} as any
       },
       {
         gaId: elizabeth.id,
-        mentorId: prem.id,
+        mentorId: daniel.id,
         unitId: 'MATH-DEPT-2026',
         status: 'ExpectationSet' as const,
         expectationData: {
@@ -56,25 +67,25 @@ async function seed() {
           weeklyHours: 20,
           responsibilities: "Lead frontend development for the GradEval project."
         },
-        midYearData: null,
-        finalEvaluationData: null
+        midYearData: {} as any,
+        finalEvaluationData: {} as any
       },
       {
         gaId: darcy.id,
         mentorId: sritam.id,
-        unitId: 'BIO-DEPT-2026',
+        unitId: 'CS-DEPT-2026',
         status: 'MidYearCompleted' as const,
         expectationData: { goals: ["Research Assistance"], weeklyHours: 15 },
         midYearData: { 
           performance: "Exceeding expectations", 
           feedback: "Great progress on data collection." 
         },
-        finalEvaluationData: null
+        finalEvaluationData: {} as any
       },
       {
         gaId: elizabeth.id,
         mentorId: daniel.id,
-        unitId: 'PHYS-DEPT-2026',
+        unitId: 'MATH-DEPT-2026',
         status: 'FinalEvaluated' as const,
         expectationData: { goals: ["Lab Maintenance"] },
         midYearData: { performance: "Satisfactory" },
