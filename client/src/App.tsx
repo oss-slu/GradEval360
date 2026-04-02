@@ -7,6 +7,7 @@ import { AppHeader } from "./components/app-header";
 import ProtectedRoute from "./components/auth/protected-route";
 import LoginPage from "@/pages/login";
 import { WelcomeBanner } from "@/components/dashboard/welcome-banner";
+import AppointmentsPage from "@/pages/appointments";
 
 const { useSession } = authClient;
 
@@ -65,6 +66,7 @@ function AppRoutes() {
       <Route element={<ProtectedRoute />}>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<DashboardShell />} />
+        <Route path="/appointments" element={<AppointmentsPage />} />
       </Route>
       <Route path="*" element={<Navigate to={isAuthed ? "/dashboard" : "/login"} replace />} />
     </Routes>
