@@ -76,6 +76,9 @@ export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [mentorFilter, setMentorFilter] = useState("all");
+  const [gaFilter, setGaFilter] = useState("all");
 
   useEffect(() => {
     let isMounted = true;
@@ -85,7 +88,7 @@ export default function AppointmentsPage() {
         setLoading(true);
         setError("");
 
-        const response = await fetch("/api/appointments", {
+        const response = await fetch("http://localhost:3000/api/appointments", {
           method: "GET",
           credentials: "include",
           headers: {
@@ -133,11 +136,41 @@ export default function AppointmentsPage() {
     };
   }, []);
 
+  const { statusOptions, mentorOptions, gaOptions } = useMemo(() => {
+    const statusSet = new Set<string>();
+    const mentorSet = new Set<string>();
+    const gaSet = new Set<string>();
+
+    for (const appt of appointments) {
+      if (appt.status) statusSet.add(appt.status);
+      if (appt.mentorName) mentorSet.add(appt.mentorName);
+      if (appt.gaName) gaSet.add(appt.gaName);
+    }
+
+    const toSorted = (values: Set<string>) =>
+      Array.from(values).sort((a, b) => a.localeCompare(b));
+
+    return {
+      statusOptions: toSorted(statusSet),
+      mentorOptions: toSorted(mentorSet),
+      gaOptions: toSorted(gaSet),
+    };
+  }, [appointments]);
+
+  const filteredAppointments = useMemo(() => {
+    return appointments.filter((appointment) => {
+      const statusOk = statusFilter === "all" || (appointment.status || "Unknown") === statusFilter;
+      const mentorOk = mentorFilter === "all" || appointment.mentorName === mentorFilter;
+      const gaOk = gaFilter === "all" || appointment.gaName === gaFilter;
+      return statusOk && mentorOk && gaOk;
+    });
+  }, [appointments, statusFilter, mentorFilter, gaFilter]);
+
   const appointmentCountLabel = useMemo(() => {
     if (loading) return "Loading...";
-    if (appointments.length === 1) return "1 appointment";
-    return `${appointments.length} appointments`;
-  }, [appointments.length, loading]);
+    if (filteredAppointments.length === 1) return "1 appointment";
+    return `${filteredAppointments.length} appointments`;
+  }, [filteredAppointments.length, loading]);
 
   return (
     <SidebarProvider defaultOpen={false}>
@@ -169,45 +202,107 @@ export default function AppointmentsPage() {
                   <p className="text-sm text-muted-foreground">No appointments found.</p>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {appointments.map((appointment, index) => {
-                    const status = appointment.status || "Unknown";
+                <>
+                  <div className="rounded-xl border bg-white p-4 shadow-sm">
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      <label className="flex flex-col gap-1 text-sm font-medium text-muted-foreground">
+                        Status
+                        <select
+                          className="rounded-md border bg-white px-3 py-2 text-sm text-foreground shadow-sm"
+                          value={statusFilter}
+                          onChange={(event) => setStatusFilter(event.target.value)}
+                        >
+                          <option value="all">All statuses</option>
+                          {statusOptions.map((status) => (
+                            <option key={status} value={status}>
+                              {status}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
 
-                    return (
-                      <div
-                        key={String(getAppointmentId(appointment, index))}
-                        className="rounded-xl border bg-white p-5 shadow-sm"
-                      >
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                          <div className="space-y-1">
-                            <h2 className="text-lg font-semibold">
-                              {getAppointmentTitle(appointment, index)}
-                            </h2>
-                            <p className="text-sm text-muted-foreground">
-                              {formatDateTime(appointment)}
-                            </p>
+                      <label className="flex flex-col gap-1 text-sm font-medium text-muted-foreground">
+                        Mentor
+                        <select
+                          className="rounded-md border bg-white px-3 py-2 text-sm text-foreground shadow-sm"
+                          value={mentorFilter}
+                          onChange={(event) => setMentorFilter(event.target.value)}
+                        >
+                          <option value="all">All mentors</option>
+                          {mentorOptions.map((mentor) => (
+                            <option key={mentor} value={mentor}>
+                              {mentor}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
 
-                            {(appointment.mentorName || appointment.gaName || appointment.adminName) && (
-                              <div className="text-sm text-muted-foreground">
-                                {appointment.mentorName && <p>Mentor: {appointment.mentorName}</p>}
-                                {appointment.gaName && <p>GA: {appointment.gaName}</p>}
-                                {appointment.adminName && <p>Admin: {appointment.adminName}</p>}
-                              </div>
-                            )}
-                          </div>
+                      <label className="flex flex-col gap-1 text-sm font-medium text-muted-foreground">
+                        GA
+                        <select
+                          className="rounded-md border bg-white px-3 py-2 text-sm text-foreground shadow-sm"
+                          value={gaFilter}
+                          onChange={(event) => setGaFilter(event.target.value)}
+                        >
+                          <option value="all">All GAs</option>
+                          {gaOptions.map((ga) => (
+                            <option key={ga} value={ga}>
+                              {ga}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                  </div>
 
-                          <span
-                            className={`inline-flex w-fit items-center rounded-full border px-3 py-1 text-xs font-medium ${getStatusClasses(
-                              status
-                            )}`}
+                  {filteredAppointments.length === 0 ? (
+                    <div className="rounded-xl border bg-white p-6 shadow-sm">
+                      <p className="text-sm text-muted-foreground">
+                        No appointments match the selected filters.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {filteredAppointments.map((appointment, index) => {
+                        const status = appointment.status || "Unknown";
+
+                        return (
+                          <div
+                            key={String(getAppointmentId(appointment, index))}
+                            className="rounded-xl border bg-white p-5 shadow-sm"
                           >
-                            {status}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                              <div className="space-y-1">
+                                <h2 className="text-lg font-semibold">
+                                  {getAppointmentTitle(appointment, index)}
+                                </h2>
+                                <p className="text-sm text-muted-foreground">
+                                  {formatDateTime(appointment)}
+                                </p>
+
+                                {(appointment.mentorName || appointment.gaName || appointment.adminName) && (
+                                  <div className="text-sm text-muted-foreground">
+                                    {appointment.mentorName && <p>Mentor: {appointment.mentorName}</p>}
+                                    {appointment.gaName && <p>GA: {appointment.gaName}</p>}
+                                    {appointment.adminName && <p>Admin: {appointment.adminName}</p>}
+                                  </div>
+                                )}
+                              </div>
+
+                              <span
+                                className={`inline-flex w-fit items-center rounded-full border px-3 py-1 text-xs font-medium ${getStatusClasses(
+                                  status
+                                )}`}
+                              >
+                                {status}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </main>

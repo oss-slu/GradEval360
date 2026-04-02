@@ -16,10 +16,15 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
     }
 
     try {
+        const email = session.user?.email;
+        if (!email) {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
+
         const dbUser = await db
             .select()
             .from(users)
-            .where(eq(users.id, session.user.id))
+            .where(eq(users.email, email))
             .limit(1);
         if (!dbUser.length) {
             return res.status(401).json({ error: "User not found" });
@@ -28,12 +33,14 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
         const unitRows = await db
             .select()
             .from(userUnits)
-            .where(eq(userUnits.userId, session.user.id));
+            .where(eq(userUnits.userId, dbUser[0].id));
         const unitIds = unitRows.map((row) => row.unitId);
 
         // Attach the user and role to the request for easy access in routes
         (req as any).user = {
             ...session.user,
+            id: dbUser[0].id,
+            role: dbUser[0].role,
             unitId: dbUser[0].unitId,
             unitIds,
         };

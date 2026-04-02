@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "../db/index.js";
-import { appointments } from "../db/schema.js";
-import { eq } from "drizzle-orm";
+import { appointments, users } from "../db/schema.js";
+import { eq, inArray } from "drizzle-orm";
 import { requireAuth } from "../middleware/auth.js"; // adjust path if needed
 
 const router = Router();
@@ -45,7 +45,29 @@ router.get("/", requireAuth, async (req: any, res) => {
             return res.status(403).json({ error: "Forbidden" });
         }
 
-        return res.json(result);
+        const safeResult = result ?? [];
+        if (!safeResult.length) {
+            return res.json(safeResult);
+        }
+
+        const userIds = Array.from(
+            new Set(safeResult.flatMap((appt: any) => [appt.gaId, appt.mentorId].filter(Boolean)))
+        );
+
+        const userRows = await db
+            .select({ id: users.id, fullName: users.fullName })
+            .from(users)
+            .where(inArray(users.id, userIds));
+
+        const userMap = new Map(userRows.map((row) => [row.id, row.fullName]));
+
+        const enriched = safeResult.map((appt: any) => ({
+            ...appt,
+            gaName: userMap.get(appt.gaId) ?? null,
+            mentorName: userMap.get(appt.mentorId) ?? null,
+        }));
+
+        return res.json(enriched);
     } catch(error) {
         console.error("Error fetching appointments:", error);
         return res.status(500).json({ error: "Server error" });
