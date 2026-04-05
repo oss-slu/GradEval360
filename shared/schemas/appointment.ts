@@ -38,7 +38,7 @@ export const SelfEvaluationSchema = z.object({
 
 export const MentorEvaluationSchema = z.object({
   appointmentId: z.string().uuid(),
-  ratings: z.record(z.number()).optional(),
+  ratings: z.record(z.string(), z.number()).optional(),
   narrative: z.string().optional(),
   overallSummary: z.string().optional(),
   finalMeetingDate: z.string().optional(),
