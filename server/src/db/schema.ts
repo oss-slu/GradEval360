@@ -5,7 +5,11 @@ import { UserRoleEnum } from "../../../shared/src/types";
 export const statusEnum = pgEnum('status', [
   'AwaitingExpectationSetting', 
   'ExpectationSet', 
-  'MidYearCompleted', 
+  'AwaitingSelfEvaluation',
+  'SelfEvaluationCompleted',
+  'AwaitingMentorEvaluation',
+  'MentorEvaluationCompleted',
+  'AwaitingSignOff',
   'FinalEvaluated'
 ]);
 
@@ -13,16 +17,25 @@ interface Expectation {
   goals: string[];
   weeklyHours?: number;
   responsibilities?: string;
+  mentorNotes?: string;
+  gaAcknowledged?: boolean;
+  gaAcknowledgedAt?: string;
 }
 
-interface MidYear {
-  performance: string;
-  feedback?: string;
+interface SelfEvaluation {
+  goalProgress?: string;
+  strengths?: string;
+  challenges?: string;
+  additionalComments?: string;
 }
 
-interface FinalEval {
-  grade: string;
-  summary: string;
+interface MentorEvaluation {
+  ratings?: Record<string, number>;
+  narrative?: string;
+  overallSummary?: string;
+  finalMeetingDate?: string;
+  gaSignOff?: boolean;
+  gaSignOffAt?: string;
 }
 
 // Pass the Zod options to Postgres Enum
@@ -104,11 +117,11 @@ export const appointments = pgTable('appointments', {
     .default({} as any)
     .notNull(), 
 
-  midYearData: jsonb('mid_year_data').$type<MidYear>()
+  selfEvaluationData: jsonb('self_evaluation_data').$type<SelfEvaluation>()
     .default({} as any)
     .notNull(),
 
-  finalEvaluationData: jsonb('final_evaluation_data').$type<FinalEval>().default({} as any).notNull(),
+  mentorEvaluationData: jsonb('mentor_evaluation_data').$type<MentorEvaluation>().default({} as any).notNull(),
   
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),

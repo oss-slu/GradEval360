@@ -118,5 +118,4 @@ Expected:
 1. Do not remove `verification` table; OAuth depends on it.
 2. Keep auth table names aligned with Better Auth model names unless adapter mappings are updated.
 3. If role logic changes, update `resolveRoleByEmail` and re-test login.
-4. For policy/redirect issues, use root doc: `OKTA_SETUP_AND_SMOKE_TEST.md`.
-
+4. For policy/redirect issues, use: `OKTA_SETUP_AND_SMOKE_TEST.md`.

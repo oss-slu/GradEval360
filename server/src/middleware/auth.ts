@@ -4,7 +4,7 @@ import { auth } from "../db/auth.js";
 
 import { db } from "../db/index.js"; 
 import { users, userUnits } from "../db/schema.js";  // adjust if needed
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
     const session = await auth.api.getSession({ 
@@ -21,10 +21,11 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
             return res.status(401).json({ error: "Unauthorized" });
         }
 
+        const normalizedEmail = email.toLowerCase();
         const dbUser = await db
             .select()
             .from(users)
-            .where(eq(users.email, email))
+            .where(sql`lower(${users.email}) = ${normalizedEmail}`)
             .limit(1);
         if (!dbUser.length) {
             return res.status(401).json({ error: "User not found" });
