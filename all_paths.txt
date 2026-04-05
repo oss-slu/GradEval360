@@ -1,6 +1,6 @@
 .
 ./CODE_OF_CONDUCT.md
-./setup.md
+./docs/setup.md
 ./server
 ./server/package-lock.json
 ./server/package.json
@@ -36,6 +36,9 @@
 ./all_paths.txt
 ./docs
 ./docs/queries.md
+./docs/OKTA_SETUP_AND_SMOKE_TEST.md
+./docs/AUTH_TABLES_AND_FLOW.md
+./docs/status-enum.md
 ./servers.json
 ./README.md
 ./.gitignore

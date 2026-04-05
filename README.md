@@ -10,8 +10,8 @@ Our goal for this semester is to complete the **Expectation Setting** workflow. 
 ## How to Get Started
 We have a dedicated guide to help you set up your machine. **Please follow this first to ensure your environment is ready:**
 
-- Environment/setup guide: [setup.md](./setup.md)
-- Okta app setup + troubleshooting + smoke test: [OKTA_SETUP_AND_SMOKE_TEST.md](./OKTA_SETUP_AND_SMOKE_TEST.md)
+- Environment/setup guide: [docs/setup.md](./docs/setup.md)
+- Okta app setup + troubleshooting + smoke test: [docs/OKTA_SETUP_AND_SMOKE_TEST.md](./docs/OKTA_SETUP_AND_SMOKE_TEST.md)
 
 
 ---

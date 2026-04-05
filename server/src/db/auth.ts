@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { genericOAuth } from "better-auth/plugins";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db } from "./index.js";
 import * as schema from "./schema.js";
 
@@ -25,7 +25,7 @@ async function resolveRoleByEmail(email?: string): Promise<string> {
     const [matchedUser] = await db
         .select({ role: schema.users.role })
         .from(schema.users)
-        .where(eq(schema.users.email, normalizedEmail))
+        .where(sql`lower(${schema.users.email}) = ${normalizedEmail}`)
         .limit(1);
 
     return matchedUser?.role ?? "GA";

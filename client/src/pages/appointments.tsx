@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppHeader } from "@/components/app-header";
+import { authClient } from "@/lib/auth-client";
 
 type Appointment = {
   id?: string | number;
@@ -19,6 +20,7 @@ type Appointment = {
   mentorName?: string;
   gaName?: string;
   adminName?: string;
+  unitId?: string;
 };
 
 function formatDateTime(appointment: Appointment) {
@@ -73,6 +75,13 @@ function getStatusClasses(status?: string) {
 }
 
 export default function AppointmentsPage() {
+  const { data: session } = authClient.useSession();
+  const userRoleRaw =
+    (session?.user as any)?.role ??
+    (session?.user as any)?.userRole ??
+    (session?.user as any)?.metadata?.role;
+  const userRole = userRoleRaw ? String(userRoleRaw) : null;
+
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -171,6 +180,46 @@ export default function AppointmentsPage() {
     if (filteredAppointments.length === 1) return "1 appointment";
     return `${filteredAppointments.length} appointments`;
   }, [filteredAppointments.length, loading]);
+
+  const getActionLabel = (status?: string) => {
+    switch (status) {
+      case "AwaitingExpectationSetting":
+        return "Set expectations";
+      case "ExpectationSet":
+        return "Acknowledge expectations";
+      case "AwaitingSelfEvaluation":
+        return "Complete self-evaluation";
+      case "SelfEvaluationCompleted":
+        return "Start mentor evaluation";
+      case "AwaitingMentorEvaluation":
+        return "Complete mentor evaluation";
+      case "MentorEvaluationCompleted":
+      case "AwaitingSignOff":
+        return "Sign off";
+      default:
+        return null;
+    }
+  };
+
+  const shouldShowAction = (status?: string, role?: string | null) => {
+    if (!role || !status) return false;
+    if (role === "Mentor") {
+      return (
+        status === "AwaitingExpectationSetting" ||
+        status === "SelfEvaluationCompleted" ||
+        status === "AwaitingMentorEvaluation"
+      );
+    }
+    if (role === "GA") {
+      return (
+        status === "ExpectationSet" ||
+        status === "AwaitingSelfEvaluation" ||
+        status === "MentorEvaluationCompleted" ||
+        status === "AwaitingSignOff"
+      );
+    }
+    return false;
+  };
 
   return (
     <SidebarProvider defaultOpen={false}>
@@ -287,6 +336,12 @@ export default function AppointmentsPage() {
                                     {appointment.adminName && <p>Admin: {appointment.adminName}</p>}
                                   </div>
                                 )}
+
+                                {appointment.unitId && (
+                                  <p className="text-sm text-muted-foreground">
+                                    Unit: {appointment.unitId}
+                                  </p>
+                                )}
                               </div>
 
                               <span
@@ -297,6 +352,17 @@ export default function AppointmentsPage() {
                                 {status}
                               </span>
                             </div>
+
+                            {shouldShowAction(status, userRole) && (
+                              <div className="mt-4 flex justify-end">
+                                <button
+                                  type="button"
+                                  className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800"
+                                >
+                                  {getActionLabel(status) ?? "Take action"}
+                                </button>
+                              </div>
+                            )}
                           </div>
                         );
                       })}
