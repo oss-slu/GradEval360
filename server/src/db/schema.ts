@@ -18,6 +18,9 @@ interface Expectation {
   weeklyHours?: number;
   responsibilities?: string;
   mentorNotes?: string;
+
+  stipendConfirmed?: boolean;
+  
   gaAcknowledged?: boolean;
   gaAcknowledgedAt?: string;
 }
