@@ -22,7 +22,7 @@ This guide documents how to create and configure the Mock Okta app for local dev
 
 ## 2. Configure Server Environment
 
-Update `/Users/premkiran/OSS/GradEval360/server/.env`:
+Update `server/.env`:
 
 ```env
 OKTA_ISSUER_URL=https://<your-subdomain>.okta.com/oauth2/default
@@ -63,7 +63,7 @@ Use an Okta user with an email that exists in seed data, e.g.:
 - `darcy.mupenda@slu.edu`
 - `elizabeth.dreste@slu.edu`
 
-Source: `/Users/premkiran/OSS/GradEval360/server/src/db/seed.ts`
+Source: `server/src/db/seed.ts`
 
 ## 4. Start Local Services
 
@@ -71,13 +71,13 @@ In separate terminals:
 
 1. Server:
 ```bash
-cd /Users/premkiran/OSS/GradEval360/server
+cd server
 npm run dev
 ```
 
 2. Client:
 ```bash
-cd /Users/premkiran/OSS/GradEval360/client
+cd client
 npm run dev
 ```
 
@@ -95,7 +95,7 @@ npm run dev
 The smoke test validates auth endpoints and OAuth initiation.
 
 ```bash
-cd /Users/premkiran/OSS/GradEval360/server
+cd server
 npm run smoke:auth
 ```
 
@@ -120,4 +120,3 @@ Expected output ends with:
 - `user_info_is_missing`
   - Verify issuer is correct and includes `/oauth2/default` if using custom auth server.
   - Ensure scopes include `openid profile email`.
-

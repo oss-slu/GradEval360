@@ -1,7 +1,7 @@
 # Appointment Status Enum Reference
 
 This document describes the current appointment status workflow as implemented in
-`/Users/premkiran/OSS/GradEval360/server/src/db/schema.ts`. It maps each status to:
+`server/src/db/schema.ts`. It maps each status to:
 what the UI should display, who acts, what action advances the status, and which
 data is required at that stage.
 
