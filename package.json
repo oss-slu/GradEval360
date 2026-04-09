@@ -1,5 +1,6 @@
 {
   "name": "gradeval360-root",
+  "license": "BSD-3-Clause",
   "private": true,
   "engines": {
     "node": ">=20.0.0",
