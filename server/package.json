@@ -17,7 +17,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "BSD-3-Clause",
   "dependencies": {
     "better-auth": "1.4.18",
     "cors": "^2.8.6",

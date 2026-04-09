@@ -144,3 +144,8 @@ We use modern, industry-standard tools. If you are new to these, don't worry! Ea
 - **Backend:** Node.js + Drizzle ORM (A simple way to talk to our database using TypeScript).
 - **Database:** PostgreSQL (Running inside a Docker container).
 - **Authentication:** Better-auth (Handles our Mock Okta / OIDC login flow).
+
+---
+
+## License
+This project is licensed under the BSD 3-Clause License. See `LICENSE` for details.
