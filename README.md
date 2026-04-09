@@ -53,8 +53,8 @@ GradEval360/
 
 ## Architecture Diagram
 For a high-level system view, see:
-- Diagram source: `docs/architecture.mmd`
-- Rendered SVG: `docs/architecture.svg`
+- Diagram source: [docs/architecture.mmd](./docs/architecture.mmd)
+- Rendered SVG: [docs/architecture.svg](./docs/architecture.svg)
 
 ---
 
