@@ -51,6 +51,13 @@ GradEval360/
 
 ---
 
+## Architecture Diagram
+For a high-level system view, see:
+- Diagram source: `docs/architecture.mmd`
+- Rendered SVG: `docs/architecture.svg`
+
+---
+
 ## Quick Start (Local)
 If you’ve already met the prerequisites, this is the shortest path to running the app locally:
 

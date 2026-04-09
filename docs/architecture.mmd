@@ -1,0 +1,39 @@
+flowchart LR
+  subgraph Client["Client (React + Vite)"]
+    UI["UI Pages + Components\n(client/src)"]
+    AuthClient["better-auth React client\n(client/src/lib/auth-client.ts)"]
+  end
+
+  subgraph Server["Server (Express)"]
+    API["Express API\n(server/src/index.ts)"]
+    Routes["Routes\n/users/me, /appointments\n(server/src/routes)"]
+    Middleware["Auth Middleware\n(server/src/middleware/auth.ts)"]
+    Auth["Better Auth + Okta OAuth\n(server/src/db/auth.ts)"]
+    DBLayer["Drizzle ORM\n(server/src/db/index.ts)"]
+  end
+
+  subgraph DB["Postgres (Docker)"]
+    Domain["Domain Tables\nusers, user_units, appointments\n(server/src/db/schema.ts)"]
+    AuthTables["Auth Tables\nuser, session, account, verification\n(server/src/db/schema.ts)"]
+  end
+
+  subgraph Shared["Shared Package"]
+    Schemas["Zod Schemas + Enums\n(shared)"]
+  end
+
+  Okta["Okta (OIDC)"]
+
+  UI --> AuthClient
+  AuthClient --> API
+  UI --> API
+  API --> Routes
+  Routes --> Middleware
+  Middleware --> Auth
+  API --> Auth
+  Auth --> Okta
+  API --> DBLayer
+  DBLayer --> Domain
+  DBLayer --> AuthTables
+
+  Schemas --- UI
+  Schemas --- API

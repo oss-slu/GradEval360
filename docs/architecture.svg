@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="700" viewBox="0 0 1200 700" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .title { font: 700 16px Helvetica, Arial, sans-serif; fill: #111827; }
+      .label { font: 600 12px Helvetica, Arial, sans-serif; fill: #111827; }
+      .small { font: 400 11px Helvetica, Arial, sans-serif; fill: #374151; }
+      .box { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 1.5; rx: 10; }
+      .inner { fill: #ffffff; stroke: #d1d5db; stroke-width: 1.2; rx: 8; }
+      .container { fill: #f1f5f9; stroke: #94a3b8; stroke-width: 2; rx: 14; }
+      .arrow { stroke: #0f172a; stroke-width: 1.5; fill: none; }
+      .dash { stroke-dasharray: 4 4; }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,3 L0,6 z" fill="#0f172a" />
+    </marker>
+  </defs>
+
+  <!-- Client -->
+  <rect class="container" x="40" y="60" width="300" height="260" />
+  <text class="title" x="55" y="85">Client (React + Vite)</text>
+
+  <rect class="inner" x="60" y="105" width="260" height="70" />
+  <text class="label" x="75" y="130">UI Pages + Components</text>
+  <text class="small" x="75" y="150">client/src</text>
+
+  <rect class="inner" x="60" y="190" width="260" height="70" />
+  <text class="label" x="75" y="215">better-auth React client</text>
+  <text class="small" x="75" y="235">client/src/lib/auth-client.ts</text>
+
+  <!-- Server -->
+  <rect class="container" x="380" y="40" width="360" height="320" />
+  <text class="title" x="395" y="65">Server (Express)</text>
+
+  <rect class="inner" x="400" y="85" width="320" height="60" />
+  <text class="label" x="415" y="110">Express API</text>
+  <text class="small" x="415" y="130">server/src/index.ts</text>
+
+  <rect class="inner" x="400" y="155" width="320" height="50" />
+  <text class="label" x="415" y="185">Routes: /users/me, /appointments</text>
+
+  <rect class="inner" x="400" y="215" width="320" height="45" />
+  <text class="label" x="415" y="242">Auth Middleware</text>
+
+  <rect class="inner" x="400" y="265" width="150" height="70" />
+  <text class="label" x="415" y="292">Better Auth</text>
+  <text class="small" x="415" y="312">server/src/db/auth.ts</text>
+
+  <rect class="inner" x="570" y="265" width="150" height="70" />
+  <text class="label" x="585" y="292">Drizzle ORM</text>
+  <text class="small" x="585" y="312">server/src/db/index.ts</text>
+
+  <!-- DB -->
+  <rect class="container" x="780" y="80" width="320" height="260" />
+  <text class="title" x="795" y="105">Postgres (Docker)</text>
+
+  <rect class="inner" x="800" y="125" width="280" height="70" />
+  <text class="label" x="815" y="150">Domain Tables</text>
+  <text class="small" x="815" y="170">users, user_units, appointments</text>
+
+  <rect class="inner" x="800" y="210" width="280" height="70" />
+  <text class="label" x="815" y="235">Auth Tables</text>
+  <text class="small" x="815" y="255">user, session, account, verification</text>
+
+  <!-- Shared -->
+  <rect class="container" x="40" y="360" width="300" height="140" />
+  <text class="title" x="55" y="385">Shared Package</text>
+
+  <rect class="inner" x="60" y="405" width="260" height="70" />
+  <text class="label" x="75" y="430">Zod Schemas + Enums</text>
+  <text class="small" x="75" y="450">shared</text>
+
+  <!-- Okta -->
+  <rect class="container" x="780" y="380" width="220" height="100" />
+  <text class="title" x="795" y="410">Okta (OIDC)</text>
+
+  <!-- Arrows -->
+  <line class="arrow" x1="320" y1="140" x2="400" y2="115" marker-end="url(#arrow)" />
+  <line class="arrow" x1="320" y1="225" x2="400" y2="115" marker-end="url(#arrow)" />
+
+  <line class="arrow" x1="560" y1="145" x2="560" y2="155" marker-end="url(#arrow)" />
+  <line class="arrow" x1="560" y1="205" x2="560" y2="215" marker-end="url(#arrow)" />
+  <line class="arrow" x1="560" y1="260" x2="475" y2="265" marker-end="url(#arrow)" />
+
+  <line class="arrow" x1="560" y1="145" x2="475" y2="265" marker-end="url(#arrow)" />
+  <line class="arrow" x1="560" y1="145" x2="645" y2="265" marker-end="url(#arrow)" />
+
+  <line class="arrow" x1="645" y1="300" x2="800" y2="160" marker-end="url(#arrow)" />
+  <line class="arrow" x1="645" y1="300" x2="800" y2="245" marker-end="url(#arrow)" />
+
+  <line class="arrow" x1="550" y1="300" x2="780" y2="420" marker-end="url(#arrow)" />
+
+  <line class="arrow dash" x1="190" y1="440" x2="190" y2="175" marker-end="url(#arrow)" />
+  <line class="arrow dash" x1="190" y1="440" x2="400" y2="115" marker-end="url(#arrow)" />
+</svg>
