@@ -137,6 +137,11 @@ Helpful references in `docs/`:
 
 ---
 
+## Contributing
+We welcome contributors. Start with `CONTRIBUTING.md` for setup, issue labels, and PR expectations.
+
+---
+
 ## Troubleshooting (Short List)
 - If `npm ci` changes `package-lock.json`, don’t commit unless you added/updated a dependency.
 - If the DB UI can’t connect, try `docker-compose down -v` and re-run setup.

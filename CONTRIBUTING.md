@@ -1,10 +1,18 @@
 # Contributing Guidelines
 
-This document outlines the workflow and standards for all contributors to this project. Please follow these steps to ensure a smooth development process.
+This document outlines the workflow and standards for contributors to this project. Please follow these steps to keep changes consistent and easy to review.
 
 ---
 
-## 🚀 Workflow
+## Before You Start
+
+- Read the setup guide: [docs/setup.md](docs/setup.md)
+- Review our code of conduct: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+- Skim the architecture diagram: [docs/architecture.svg](docs/architecture.svg)
+
+---
+
+## Workflow
 
 ### Branching Strategy
 To keep our project organized, we link all code changes directly to issues.
@@ -25,7 +33,7 @@ To keep our project organized, we link all code changes directly to issues.
 
 ---
 
-## 📤 Submission Process
+## Submission Process
 
 When you are ready to submit your work:
 
@@ -57,7 +65,7 @@ git push -u origin <your-branch-name>
 
 ---
 
-## 📋 Standards & Expectations
+## Standards and Expectations
 
 ### Sprint Deadlines
 
@@ -67,7 +75,30 @@ git push -u origin <your-branch-name>
 
 ---
 
-## 💬 Communication
+## Issue Labels
+
+We use labels to make issues easier to pick up and prioritize.
+
+- `good first issue` for newcomer-friendly tasks
+- `help wanted` for contributor-ready tasks
+- `bug` for defects and regressions
+- `enhancement` for new features or improvements
+- `documentation` for docs-only changes
+
+If you are new to the project, start with issues labeled `good first issue`.
+
+---
+
+## Pull Request Checklist
+
+- Keep PRs focused and scoped to a single issue.
+- Link the issue in the PR description using `Closes #123`.
+- Add screenshots for UI changes.
+- Note any follow-up work or tradeoffs in the PR body.
+
+---
+
+## Communication
 
 Effective communication is key to our success.
 
