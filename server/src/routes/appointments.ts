@@ -2,27 +2,11 @@ import { Router } from "express";
 import { db } from "../db/index.js";
 import { appointments, users } from "../db/schema.js";
 import { and, eq, inArray } from "drizzle-orm";
-import { requireAuth } from "../middleware/auth.js"; // adjust path if needed 
-import { z } from 'zod';
-export const GAAcknowledgeExpectationsSchema = z
-  .object({
-    goals: z
-      .array(z.string().trim().min(5, "Each goal must be at least 5 characters"))
-      .min(1, "At least 1 goal is required")
-      .max(3, "You can add at most 3 goals"),
-  })
-  .strict();
-
-export const APPOINTMENT_STATUS = {
-  AWAITING: 'AwaitingExpectationSetting',
-  SET: 'ExpectationSet',
-  AWAITING_SELF_EVAL: 'AwaitingSelfEvaluation',
-  SELF_EVAL_DONE: 'SelfEvaluationCompleted',
-  AWAITING_MENTOR_EVAL: 'AwaitingMentorEvaluation',
-  MENTOR_EVAL_DONE: 'MentorEvaluationCompleted',
-  AWAITING_SIGN_OFF: 'AwaitingSignOff',
-  FINAL: 'FinalEvaluated',
-} as const;
+import { requireAuth } from "../middleware/auth.js"; // adjust path if needed
+import {
+  APPOINTMENT_STATUS,
+  GAAcknowledgeExpectationsSchema,
+} from "../../../shared/schemas/appointment.js";
 
 const router = Router();
 
