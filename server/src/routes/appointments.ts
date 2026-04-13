@@ -3,12 +3,43 @@ import { db } from "../db/index.js";
 import { appointments, users } from "../db/schema.js";
 import { eq, inArray } from "drizzle-orm";
 import { requireAuth } from "../middleware/auth.js"; // adjust path if needed
+import { SelfEvaluationSchema } from "../../../shared/schemas/appointment"; 
 
 const router = Router();
+//removed: requireAuth
+router.post("/:id/self-eval", requireAuth, async (req: any, res) => {
+  try {
+    const { id } = req.params;
+
+    const parsed = SelfEvaluationSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.issues });
+    }
+
+    await db
+      .update(appointments)
+      .set({
+        selfEvaluationData: parsed.data,
+        status: "SelfEvaluationCompleted",
+      })
+      .where(eq(appointments.id, id));
+
+    return res.json({ message: "Self-evaluation submitted successfully" });
+
+  } catch (error) {
+    console.error("Error submitting self-evaluation:", error);
+    return res.status(500).json({ error: "Server error" });
+  }
+});
+
+//export default router; 
 
 // Get api/appointments
+//removed: requireAuth,
 router.get("/", requireAuth, async (req: any, res) => {    
     try {
+        
         const user = req.user;
 
         let result; 
