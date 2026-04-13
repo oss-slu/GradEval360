@@ -1,6 +1,7 @@
 
 import { z } from 'zod';
 
+
 // The specific data captured during the first phase of the GA cycle
 export const ExpectationSettingSchema = z.object({
   appointmentId: z.string().uuid(),
@@ -13,8 +14,19 @@ export const ExpectationSettingSchema = z.object({
   gaAcknowledgedAt: z.string().optional(),
 });
 
+// Strict schema for GA acknowledgment payload only
+export const GAAcknowledgeExpectationsSchema = z
+  .object({
+    goals: z
+      .array(z.string().trim().min(5, "Each goal must be at least 5 characters"))
+      .min(1, "At least 1 goal is required")
+      .max(3, "You can add at most 3 goals"),
+  })
+  .strict();
+
 // TypeScript type inference
 export type ExpectationSettingInput = z.infer<typeof ExpectationSettingSchema>;
+export type GAAcknowledgeExpectationsInput = z.infer<typeof GAAcknowledgeExpectationsSchema>;
 
 // Shared Constants for the UI
 export const APPOINTMENT_STATUS = {
@@ -29,12 +41,21 @@ export const APPOINTMENT_STATUS = {
 } as const;
 
 export const SelfEvaluationSchema = z.object({
+  goalProgress: z.string().min(5, "Must be at least 5 characters"),
+  strengths: z.string().min(5, "Must be at least 5 characters"),
+  challenges: z.string().min(5, "Must be at least 5 characters"),
+  additionalComments: z.string().optional(),
+});
+
+/*
+export const SelfEvaluationSchema = z.object({
   appointmentId: z.string().uuid(),
   goalProgress: z.string().min(5, "Please describe your goal progress").optional(),
   strengths: z.string().min(5, "Please describe strengths").optional(),
   challenges: z.string().min(5, "Please describe challenges").optional(),
   additionalComments: z.string().optional(),
 });
+*/
 
 export const MentorEvaluationSchema = z.object({
   appointmentId: z.string().uuid(),

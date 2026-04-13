@@ -4,6 +4,8 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/s
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppHeader } from "@/components/app-header";
 import { authClient } from "@/lib/auth-client";
+import ExpectationReviewForm from "@/components/appointments/expectation-review-form";
+import SelfEvalForm from "@/components/appointments/self-eval-form";
 
 type Appointment = {
   id?: string | number;
@@ -44,12 +46,7 @@ function formatDateTime(appointment: Appointment) {
 }
 
 function getAppointmentTitle(appointment: Appointment, index: number) {
-  return (
-    appointment.title ||
-    appointment.subject ||
-    appointment.name ||
-    `Appointment ${index + 1}`
-  );
+  return appointment.title || appointment.subject || appointment.name || `Appointment ${index + 1}`;
 }
 
 function getAppointmentId(appointment: Appointment, index: number) {
@@ -59,11 +56,19 @@ function getAppointmentId(appointment: Appointment, index: number) {
 function getStatusClasses(status?: string) {
   const normalized = (status || "unknown").toLowerCase();
 
-  if (normalized.includes("approved") || normalized.includes("confirmed") || normalized.includes("complete")) {
+  if (
+    normalized.includes("approved") ||
+    normalized.includes("confirmed") ||
+    normalized.includes("complete")
+  ) {
     return "bg-green-100 text-green-800 border-green-200";
   }
 
-  if (normalized.includes("pending")) {
+  if (
+    normalized.includes("pending") ||
+    normalized.includes("awaiting") ||
+    normalized.includes("expectation")
+  ) {
     return "bg-yellow-100 text-yellow-800 border-yellow-200";
   }
 
@@ -76,10 +81,12 @@ function getStatusClasses(status?: string) {
 
 export default function AppointmentsPage() {
   const { data: session } = authClient.useSession();
+
   const userRoleRaw =
     (session?.user as any)?.role ??
     (session?.user as any)?.userRole ??
     (session?.user as any)?.metadata?.role;
+
   const userRole = userRoleRaw ? String(userRoleRaw) : null;
 
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -89,10 +96,47 @@ export default function AppointmentsPage() {
   const [mentorFilter, setMentorFilter] = useState("all");
   const [gaFilter, setGaFilter] = useState("all");
 
+  async function loadAppointments() {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await fetch("http://localhost:3000/api/appointments", {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to load appointments (${response.status})`);
+      }
+
+      const data = await response.json();
+
+      const normalized = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.appointments)
+          ? data.appointments
+          : [];
+
+      setAppointments(normalized);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Something went wrong while loading appointments.";
+
+      setError(message);
+      setAppointments([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   useEffect(() => {
     let isMounted = true;
 
-    async function loadAppointments() {
+    async function init() {
       try {
         setLoading(true);
         setError("");
@@ -113,9 +157,6 @@ export default function AppointmentsPage() {
 
         if (!isMounted) return;
 
-        // Handles either:
-        // 1. an array response
-        // 2. an object like { appointments: [...] }
         const normalized = Array.isArray(data)
           ? data
           : Array.isArray(data?.appointments)
@@ -138,7 +179,7 @@ export default function AppointmentsPage() {
       }
     }
 
-    loadAppointments();
+    init();
 
     return () => {
       isMounted = false;
@@ -181,28 +222,13 @@ export default function AppointmentsPage() {
     return `${filteredAppointments.length} appointments`;
   }, [filteredAppointments.length, loading]);
 
-  const getActionLabel = (status?: string) => {
-    switch (status) {
-      case "AwaitingExpectationSetting":
-        return "Set expectations";
-      case "ExpectationSet":
-        return "Acknowledge expectations";
-      case "AwaitingSelfEvaluation":
-        return "Complete self-evaluation";
-      case "SelfEvaluationCompleted":
-        return "Start mentor evaluation";
-      case "AwaitingMentorEvaluation":
-        return "Complete mentor evaluation";
-      case "MentorEvaluationCompleted":
-      case "AwaitingSignOff":
-        return "Sign off";
-      default:
-        return null;
-    }
-  };
-
-  const shouldShowAction = (status?: string, role?: string | null) => {
+  function shouldShowAction(status?: string, role?: string | null) {
     if (!role || !status) return false;
+
+    if (role === "GA") {
+      return status === "ExpectationSet" || status === "AwaitingSelfEvaluation";
+    }
+
     if (role === "Mentor") {
       return (
         status === "AwaitingExpectationSetting" ||
@@ -210,30 +236,50 @@ export default function AppointmentsPage() {
         status === "AwaitingMentorEvaluation"
       );
     }
-    if (role === "GA") {
+
+    return false;
+  }
+
+  function renderGAActionForm(appointment: Appointment, index: number) {
+    const status = appointment.status;
+    const appointmentId = getAppointmentId(appointment, index);
+
+    if (userRole !== "GA") return null;
+
+    if (status === "ExpectationSet") {
       return (
-        status === "ExpectationSet" ||
-        status === "AwaitingSelfEvaluation" ||
-        status === "MentorEvaluationCompleted" ||
-        status === "AwaitingSignOff"
+        <ExpectationReviewForm
+          appointmentId={appointmentId}
+          onSuccess={loadAppointments}
+        />
       );
     }
-    return false;
-  };
+
+    if (status === "AwaitingSelfEvaluation") {
+      return (
+        <SelfEvalForm
+          appointmentId={appointmentId}
+          onSuccess={loadAppointments}
+        />
+      );
+    }
+
+    return null;
+  }
 
   return (
     <SidebarProvider defaultOpen={false}>
-      <div className="flex h-screen w-screen bg-background overflow-hidden">
+      <div className="flex h-screen w-screen overflow-hidden bg-background">
         <AppSidebar />
-        <SidebarInset className="flex flex-col flex-1 min-w-0 h-full">
+        <SidebarInset className="flex h-full min-w-0 flex-1 flex-col">
           <AppHeader />
-          <main className="flex-1 overflow-y-auto p-8 bg-slate-50/50">
+          <main className="flex-1 overflow-y-auto bg-slate-50/50 p-8">
             <div className="mx-auto max-w-6xl">
-              <div className="flex items-center gap-4 mb-6">
+              <div className="mb-6 flex items-center gap-4">
                 <SidebarTrigger className="md:hidden" />
                 <div>
                   <h1 className="text-3xl font-bold tracking-tight">Appointments</h1>
-                  <p className="text-sm text-muted-foreground mt-1">{appointmentCountLabel}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{appointmentCountLabel}</p>
                 </div>
               </div>
 
@@ -244,7 +290,7 @@ export default function AppointmentsPage() {
               ) : error ? (
                 <div className="rounded-xl border border-red-200 bg-red-50 p-6 shadow-sm">
                   <p className="text-sm font-medium text-red-700">Could not load appointments.</p>
-                  <p className="text-sm text-red-600 mt-1">{error}</p>
+                  <p className="mt-1 text-sm text-red-600">{error}</p>
                 </div>
               ) : appointments.length === 0 ? (
                 <div className="rounded-xl border bg-white p-6 shadow-sm">
@@ -329,7 +375,9 @@ export default function AppointmentsPage() {
                                   {formatDateTime(appointment)}
                                 </p>
 
-                                {(appointment.mentorName || appointment.gaName || appointment.adminName) && (
+                                {(appointment.mentorName ||
+                                  appointment.gaName ||
+                                  appointment.adminName) && (
                                   <div className="text-sm text-muted-foreground">
                                     {appointment.mentorName && <p>Mentor: {appointment.mentorName}</p>}
                                     {appointment.gaName && <p>GA: {appointment.gaName}</p>}
@@ -353,16 +401,7 @@ export default function AppointmentsPage() {
                               </span>
                             </div>
 
-                            {shouldShowAction(status, userRole) && (
-                              <div className="mt-4 flex justify-end">
-                                <button
-                                  type="button"
-                                  className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800"
-                                >
-                                  {getActionLabel(status) ?? "Take action"}
-                                </button>
-                              </div>
-                            )}
+                            {shouldShowAction(status, userRole) && renderGAActionForm(appointment, index)}
                           </div>
                         );
                       })}
