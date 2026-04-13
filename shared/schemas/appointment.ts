@@ -1,6 +1,7 @@
 
 import { z } from 'zod';
 
+
 // The specific data captured during the first phase of the GA cycle
 export const ExpectationSettingSchema = z.object({
   appointmentId: z.string().uuid(),
@@ -40,12 +41,21 @@ export const APPOINTMENT_STATUS = {
 } as const;
 
 export const SelfEvaluationSchema = z.object({
+  goalProgress: z.string().min(5, "Must be at least 5 characters"),
+  strengths: z.string().min(5, "Must be at least 5 characters"),
+  challenges: z.string().min(5, "Must be at least 5 characters"),
+  additionalComments: z.string().optional(),
+});
+
+/*
+export const SelfEvaluationSchema = z.object({
   appointmentId: z.string().uuid(),
   goalProgress: z.string().min(5, "Please describe your goal progress").optional(),
   strengths: z.string().min(5, "Please describe strengths").optional(),
   challenges: z.string().min(5, "Please describe challenges").optional(),
   additionalComments: z.string().optional(),
 });
+*/
 
 export const MentorEvaluationSchema = z.object({
   appointmentId: z.string().uuid(),
