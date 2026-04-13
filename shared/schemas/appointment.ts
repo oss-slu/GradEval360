@@ -14,8 +14,19 @@ export const ExpectationSettingSchema = z.object({
   gaAcknowledgedAt: z.string().optional(),
 });
 
+// Strict schema for GA acknowledgment payload only
+export const GAAcknowledgeExpectationsSchema = z
+  .object({
+    goals: z
+      .array(z.string().trim().min(5, "Each goal must be at least 5 characters"))
+      .min(1, "At least 1 goal is required")
+      .max(3, "You can add at most 3 goals"),
+  })
+  .strict();
+
 // TypeScript type inference
 export type ExpectationSettingInput = z.infer<typeof ExpectationSettingSchema>;
+export type GAAcknowledgeExpectationsInput = z.infer<typeof GAAcknowledgeExpectationsSchema>;
 
 // Shared Constants for the UI
 export const APPOINTMENT_STATUS = {
