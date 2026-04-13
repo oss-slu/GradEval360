@@ -21,11 +21,26 @@ router.post("/:id/self-eval", requireAuth, async (req: any, res) => {
       return res.status(400).json({ error: parsed.error.issues });
     }
 
+    const [appointment] = await db
+      .select({ status: appointments.status })
+      .from(appointments)
+      .where(eq(appointments.id, id));
+
+    if (!appointment) {
+      return res.status(404).json({ error: "Appointment not found" });
+    }
+
+    if (appointment.status !== APPOINTMENT_STATUS.AWAITING_SELF_EVAL) {
+      return res.status(400).json({
+        error: `Appointment must be in ${APPOINTMENT_STATUS.AWAITING_SELF_EVAL} status to submit self-evaluation`,
+      });
+    }
+
     await db
       .update(appointments)
       .set({
         selfEvaluationData: parsed.data,
-        status: "SelfEvaluationCompleted",
+        status: APPOINTMENT_STATUS.SELF_EVAL_DONE,
       })
       .where(eq(appointments.id, id));
 
