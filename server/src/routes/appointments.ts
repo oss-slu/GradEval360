@@ -267,9 +267,10 @@ router.patch("/:id/expectations/setup", requireAuth, async (req: any, res) => {
         ? (appointment.expectationData as AppointmentExpectationDraft)
         : {};
 
-    const updatedExpectationData: AppointmentExpectationDraft = {
+    const updatedExpectationData: AppointmentExpectationData = {
       ...existingExpectationData,
       ...parsed.data,
+      goals: parsed.data.goals,
       mentorAcknowledged: true,
       mentorAcknowledgedAt: new Date().toISOString(),
     };
