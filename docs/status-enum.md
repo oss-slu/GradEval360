@@ -10,11 +10,16 @@ data is required at that stage.
 1. **AwaitingExpectationSetting**
    Displayed when: Appointment is created and mentor has not submitted expectations.
    Primary actor: Mentor
-   Action to advance: Mentor submits expectations.
+   Action to advance: Mentor submits expectations and acknowledges the work plan.
    Required data:
    - `expectationData.goals`
    - `expectationData.responsibilities`
    - `expectationData.weeklyHours`
+   - `expectationData.jobCategory`
+   - `expectationData.expectedOutputs`
+   - `expectationData.expectationsMeetingDate`
+   - `expectationData.mentorAcknowledged = true`
+   - `expectationData.mentorAcknowledgedAt` (timestamp string)
    - Optional: `expectationData.mentorNotes`
    Next status: `ExpectationSet`
 

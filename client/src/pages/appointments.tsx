@@ -1,14 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppHeader } from "@/components/app-header";
-import { authClient } from "@/lib/auth-client";
-import ExpectationReviewForm from "@/components/appointments/expectation-review-form";
-import SelfEvalForm from "@/components/appointments/self-eval-form";
+import { authClient, authFetch } from "@/lib/auth-client";
+import { useNavigate } from "react-router-dom";
 
 type Appointment = {
   id?: string | number;
+  appointmentCode?: string;
   appointmentId?: string | number;
   title?: string;
   name?: string;
@@ -16,6 +17,9 @@ type Appointment = {
   status?: string;
   date?: string;
   time?: string;
+  starts_at?: string;
+  start_time?: string;
+  scheduled_at?: string;
   startsAt?: string;
   startTime?: string;
   scheduledAt?: string;
@@ -27,7 +31,13 @@ type Appointment = {
 
 function formatDateTime(appointment: Appointment) {
   const rawDateTime =
-    appointment.startsAt ?? appointment.startTime ?? appointment.scheduledAt ?? appointment.date;
+    appointment.startsAt ??
+    appointment.startTime ??
+    appointment.scheduledAt ??
+    appointment.starts_at ??
+    appointment.start_time ??
+    appointment.scheduled_at ??
+    appointment.date;
 
   if (!rawDateTime) {
     return appointment.time ? `Time: ${appointment.time}` : "Date not available";
@@ -79,8 +89,82 @@ function getStatusClasses(status?: string) {
   return "bg-slate-100 text-slate-800 border-slate-200";
 }
 
+const STATUS_FLOW = [
+  {
+    status: "AwaitingExpectationSetting",
+    label: "Awaiting Expectation Setting",
+    primaryActor: "Mentor",
+    requiredAction: "Confirm duties, expectations, goals, hours, and acknowledge the plan.",
+  },
+  {
+    status: "ExpectationSet",
+    label: "Expectation Set",
+    primaryActor: "GA",
+    requiredAction: "Review mentor expectations and add 1–3 personal goals.",
+  },
+  {
+    status: "AwaitingSelfEvaluation",
+    label: "Awaiting Self-Evaluation",
+    primaryActor: "GA",
+    requiredAction: "Submit self-evaluation (progress, strengths, challenges).",
+  },
+  {
+    status: "SelfEvaluationCompleted",
+    label: "Self-Evaluation Completed",
+    primaryActor: "Mentor",
+    requiredAction: "Review GA self-evaluation and begin mentor evaluation.",
+  },
+  {
+    status: "AwaitingMentorEvaluation",
+    label: "Awaiting Mentor Evaluation",
+    primaryActor: "Mentor",
+    requiredAction: "Complete mentor evaluation and summary.",
+  },
+  {
+    status: "MentorEvaluationCompleted",
+    label: "Mentor Evaluation Completed",
+    primaryActor: "Admin",
+    requiredAction: "Review evaluation and prepare for sign-off.",
+  },
+  {
+    status: "AwaitingSignOff",
+    label: "Awaiting Sign-Off",
+    primaryActor: "Admin",
+    requiredAction: "Finalize sign-off for the appointment cycle.",
+  },
+  {
+    status: "FinalEvaluated",
+    label: "Final Evaluated",
+    primaryActor: "System",
+    requiredAction: "Cycle complete. No further action required.",
+  },
+] as const;
+
+function getActionLabelForRole(status: string, role: string | null) {
+  if (!role) return null;
+
+  if (role === "GA") {
+    if (status === "ExpectationSet") return "Acknowledge expectations";
+    if (status === "AwaitingSelfEvaluation") return "Complete self-evaluation";
+  }
+
+  if (role === "Mentor") {
+    if (status === "AwaitingExpectationSetting") return "Set expectations";
+    if (status === "SelfEvaluationCompleted") return "Start mentor evaluation";
+    if (status === "AwaitingMentorEvaluation") return "Complete mentor evaluation";
+  }
+
+  if (role === "Admin") {
+    if (status === "MentorEvaluationCompleted") return "Review sign-off";
+    if (status === "AwaitingSignOff") return "Sign off";
+  }
+
+  return null;
+}
+
 export default function AppointmentsPage() {
   const { data: session } = authClient.useSession();
+  const navigate = useNavigate();
 
   const userRoleRaw =
     (session?.user as any)?.role ??
@@ -95,58 +179,21 @@ export default function AppointmentsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [mentorFilter, setMentorFilter] = useState("all");
   const [gaFilter, setGaFilter] = useState("all");
+  const [showStatusFlow, setShowStatusFlow] = useState(false);
 
-  async function loadAppointments() {
-    try {
-      setLoading(true);
+  const loadAppointments = useCallback(
+    async (options?: { showLoading?: boolean; signal?: AbortSignal }) => {
+      const showLoading = options?.showLoading ?? true;
+
+      if (showLoading) {
+        setLoading(true);
+      }
       setError("");
 
-      const response = await fetch("http://localhost:3000/api/appointments", {
-        method: "GET",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to load appointments (${response.status})`);
-      }
-
-      const data = await response.json();
-
-      const normalized = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.appointments)
-          ? data.appointments
-          : [];
-
-      setAppointments(normalized);
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Something went wrong while loading appointments.";
-
-      setError(message);
-      setAppointments([]);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function init() {
       try {
-        setLoading(true);
-        setError("");
-
-        const response = await fetch("http://localhost:3000/api/appointments", {
+        const response = await authFetch("/api/appointments", {
           method: "GET",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          signal: options?.signal,
         });
 
         if (!response.ok) {
@@ -154,8 +201,6 @@ export default function AppointmentsPage() {
         }
 
         const data = await response.json();
-
-        if (!isMounted) return;
 
         const normalized = Array.isArray(data)
           ? data
@@ -165,7 +210,7 @@ export default function AppointmentsPage() {
 
         setAppointments(normalized);
       } catch (err) {
-        if (!isMounted) return;
+        if ((err as Error)?.name === "AbortError") return;
 
         const message =
           err instanceof Error ? err.message : "Something went wrong while loading appointments.";
@@ -173,18 +218,20 @@ export default function AppointmentsPage() {
         setError(message);
         setAppointments([]);
       } finally {
-        if (isMounted) {
+        if (showLoading) {
           setLoading(false);
         }
       }
-    }
+    },
+    []
+  );
 
-    init();
+  useEffect(() => {
+    const controller = new AbortController();
+    loadAppointments({ signal: controller.signal });
+    return () => controller.abort();
+  }, [loadAppointments]);
 
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   const { statusOptions, mentorOptions, gaOptions } = useMemo(() => {
     const statusSet = new Set<string>();
@@ -224,47 +271,28 @@ export default function AppointmentsPage() {
 
   function shouldShowAction(status?: string, role?: string | null) {
     if (!role || !status) return false;
-
-    if (role === "GA") {
-      return status === "ExpectationSet" || status === "AwaitingSelfEvaluation";
-    }
-
-    if (role === "Mentor") {
-      return (
-        status === "AwaitingExpectationSetting" ||
-        status === "SelfEvaluationCompleted" ||
-        status === "AwaitingMentorEvaluation"
-      );
-    }
-
-    return false;
+    return Boolean(getActionLabelForRole(status, role));
   }
 
-  function renderGAActionForm(appointment: Appointment, index: number) {
-    const status = appointment.status;
-    const appointmentId = getAppointmentId(appointment, index);
+  function renderActionButton(status?: string, appointment?: Appointment, index?: number) {
+    if (!status || !appointment) return null;
 
-    if (userRole !== "GA") return null;
+    const label = getActionLabelForRole(status, userRole);
+    if (!label) return null;
 
-    if (status === "ExpectationSet") {
-      return (
-        <ExpectationReviewForm
-          appointmentId={appointmentId}
-          onSuccess={loadAppointments}
-        />
-      );
-    }
+    const appointmentId = getAppointmentId(appointment, index ?? 0);
 
-    if (status === "AwaitingSelfEvaluation") {
-      return (
-        <SelfEvalForm
-          appointmentId={appointmentId}
-          onSuccess={loadAppointments}
-        />
-      );
-    }
-
-    return null;
+    return (
+      <div className="mt-4 flex flex-wrap justify-end gap-2">
+        <button
+          type="button"
+          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800"
+          onClick={() => navigate(`/appointments/${appointmentId}`)}
+        >
+          {label}
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -299,6 +327,22 @@ export default function AppointmentsPage() {
               ) : (
                 <>
                   <div className="rounded-xl border bg-white p-4 shadow-sm">
+                    <div className="mb-4 flex items-start justify-between gap-4">
+                      <div>
+                        <h2 className="text-lg font-semibold">Filters</h2>
+                        <p className="text-sm text-muted-foreground">
+                          Narrow appointments by status, mentor, or GA.
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowStatusFlow(true)}
+                      >
+                        View Status Flow
+                      </Button>
+                    </div>
                     <div className="grid gap-3 sm:grid-cols-3">
                       <label className="flex flex-col gap-1 text-sm font-medium text-muted-foreground">
                         Status
@@ -371,6 +415,9 @@ export default function AppointmentsPage() {
                                 <h2 className="text-lg font-semibold">
                                   {getAppointmentTitle(appointment, index)}
                                 </h2>
+                                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                  Appointment {appointment.appointmentCode ?? `GA-${index + 1}`}
+                                </p>
                                 <p className="text-sm text-muted-foreground">
                                   {formatDateTime(appointment)}
                                 </p>
@@ -400,8 +447,19 @@ export default function AppointmentsPage() {
                                 {status}
                               </span>
                             </div>
-
-                            {shouldShowAction(status, userRole) && renderGAActionForm(appointment, index)}
+                            {shouldShowAction(status, userRole) &&
+                              renderActionButton(status, appointment, index)}
+                            <div className="mt-3">
+                              <button
+                                type="button"
+                                className="text-sm font-medium text-slate-700 underline-offset-4 hover:underline"
+                                onClick={() =>
+                                  navigate(`/appointments/${getAppointmentId(appointment, index)}`)
+                                }
+                              >
+                                View details
+                              </button>
+                            </div>
                           </div>
                         );
                       })}
@@ -412,6 +470,46 @@ export default function AppointmentsPage() {
             </div>
           </main>
         </SidebarInset>
+        {showStatusFlow && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+            <div className="max-h-[85vh] w-full max-w-3xl overflow-y-auto rounded-xl bg-white p-6 shadow-lg">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-semibold">Appointment Status Flow</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Follow the lifecycle with the primary actor and required action at each step.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="rounded-md border px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  onClick={() => setShowStatusFlow(false)}
+                >
+                  Close
+                </button>
+              </div>
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                {STATUS_FLOW.map((step, index) => (
+                  <div key={step.status} className="rounded-lg border bg-slate-50 p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                          Step {index + 1}
+                        </p>
+                        <p className="text-base font-semibold">{step.label}</p>
+                        <p className="text-xs text-muted-foreground">{step.status}</p>
+                      </div>
+                      <span className="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium text-slate-700">
+                        {step.primaryActor}
+                      </span>
+                    </div>
+                    <p className="mt-3 text-sm text-slate-700">{step.requiredAction}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </SidebarProvider>
   );

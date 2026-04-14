@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/use-toast";
+import { authFetch } from "@/lib/auth-client";
 
 type ExpectationReviewFormProps = {
   appointmentId: string | number;
@@ -14,6 +16,8 @@ export default function ExpectationReviewForm({
 }: ExpectationReviewFormProps) {
   const [goals, setGoals] = useState<string[]>([""]);
   const [submitting, setSubmitting] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const { toast } = useToast();
 
   const trimmedGoals = useMemo(
     () => goals.map((goal) => goal.trim()).filter((goal) => goal.length > 0),
@@ -37,55 +41,53 @@ export default function ExpectationReviewForm({
   }
 
   function validateGoals() {
+    const errors: Record<string, string> = {};
+
     if (trimmedGoals.length < 1 || trimmedGoals.length > 3) {
-      alert("You need to enter between 1 and 3 goals.");
-      return false;
+      errors.goals = "Please enter between one and three goals before submitting.";
+    } else if (trimmedGoals.some((goal) => goal.length < 5)) {
+      errors.goals = "Each goal must be at least 5 characters long.";
     }
 
-    const tooShort = trimmedGoals.some((goal) => goal.length < 5);
-    if (tooShort) {
-      alert("Each goal must be at least 5 characters long.");
-      return false;
-    }
-
-    return true;
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!validateGoals()) return;
+    setFieldErrors({});
 
     try {
       setSubmitting(true);
 
-      const response = await fetch(
-        `http://localhost:3000/api/appointments/${appointmentId}/expectations`,
-        {
-          method: "PATCH",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            goals: trimmedGoals,
-          }),
-        }
-      );
+      const response = await authFetch(`/api/appointments/${appointmentId}/expectations`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          goals: trimmedGoals,
+        }),
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(errorText || `Request failed with status ${response.status}`);
       }
 
-      alert("Expectations acknowledged successfully.");
+      toast({
+        title: "Expectations acknowledged",
+        description: "Your goals were saved successfully.",
+      });
       onSuccess();
     } catch (error) {
-      alert(
-        error instanceof Error
-          ? error.message
-          : "Something went wrong while submitting your goals."
-      );
+      toast({
+        variant: "destructive",
+        title: "Could not submit expectations",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Something went wrong while submitting your goals.",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -98,6 +100,11 @@ export default function ExpectationReviewForm({
         <p className="text-sm text-muted-foreground">
           Add 1 to 3 personal goals before acknowledging this work plan.
         </p>
+        {Object.keys(fieldErrors).length > 0 && (
+          <p className="text-sm font-medium text-red-600">
+            Please fix the highlighted fields below.
+          </p>
+        )}
       </div>
 
       <div className="mt-4 space-y-4">
@@ -126,6 +133,7 @@ export default function ExpectationReviewForm({
             />
           </div>
         ))}
+        {fieldErrors.goals && <p className="text-xs text-red-600">{fieldErrors.goals}</p>}
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">

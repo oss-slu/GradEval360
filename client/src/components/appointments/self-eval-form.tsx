@@ -1,6 +1,9 @@
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/components/ui/use-toast";
+import { authFetch } from "@/lib/auth-client";
 
 type SelfEvalFormProps = {
   appointmentId: string | number;
@@ -16,54 +19,72 @@ export default function SelfEvalForm({
   const [challenges, setChallenges] = useState("");
   const [additionalComments, setAdditionalComments] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const { toast } = useToast();
 
   function validate() {
-    if (!goalProgress.trim() || !strengths.trim() || !challenges.trim()) {
-      alert("Goal progress, strengths, and challenges are required.");
-      return false;
+    const errors: Record<string, string> = {};
+
+    if (!goalProgress.trim()) {
+      errors.goalProgress = "Please describe your goal progress.";
+    } else if (goalProgress.trim().length < 5) {
+      errors.goalProgress = "Goal progress must be at least 5 characters.";
     }
 
-    return true;
+    if (!strengths.trim()) {
+      errors.strengths = "Please describe your strengths.";
+    } else if (strengths.trim().length < 5) {
+      errors.strengths = "Strengths must be at least 5 characters.";
+    }
+
+    if (!challenges.trim()) {
+      errors.challenges = "Please describe your challenges.";
+    } else if (challenges.trim().length < 5) {
+      errors.challenges = "Challenges must be at least 5 characters.";
+    }
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!validate()) return;
+    setFieldErrors({});
 
     try {
       setSubmitting(true);
 
-      const response = await fetch(
-        `http://localhost:3000/api/appointments/${appointmentId}/self-eval`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            goalProgress: goalProgress.trim(),
-            strengths: strengths.trim(),
-            challenges: challenges.trim(),
-            additionalComments: additionalComments.trim() || undefined,
-          }),
-        }
-      );
+      const response = await authFetch(`/api/appointments/${appointmentId}/self-eval`, {
+        method: "POST",
+        body: JSON.stringify({
+          goalProgress: goalProgress.trim(),
+          strengths: strengths.trim(),
+          challenges: challenges.trim(),
+          additionalComments: additionalComments.trim() || undefined,
+        }),
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(errorText || `Request failed with status ${response.status}`);
       }
 
-      alert("Self-evaluation submitted successfully.");
+      toast({
+        title: "Self-evaluation submitted",
+        description: "Thanks for completing your reflection.",
+      });
       onSuccess();
     } catch (error) {
-      alert(
-        error instanceof Error
-          ? error.message
-          : "Something went wrong while submitting your self-evaluation."
-      );
+      toast({
+        variant: "destructive",
+        title: "Could not submit self-evaluation",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Something went wrong while submitting your self-evaluation.",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -76,50 +97,60 @@ export default function SelfEvalForm({
         <p className="text-sm text-muted-foreground">
           Fill out your reflection to move this appointment forward.
         </p>
+        {Object.keys(fieldErrors).length > 0 && (
+          <p className="text-sm font-medium text-red-600">
+            Please fix the highlighted fields below.
+          </p>
+        )}
       </div>
 
       <div className="mt-4 space-y-4">
         <div className="space-y-2">
           <p className="text-sm font-medium">Goal progress</p>
-          <textarea
+          <Textarea
             value={goalProgress}
             onChange={(event) => setGoalProgress(event.target.value)}
             placeholder="Describe the progress you made toward your goals..."
             rows={4}
-            className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
           />
+          {fieldErrors.goalProgress && (
+            <p className="text-xs text-red-600">{fieldErrors.goalProgress}</p>
+          )}
         </div>
 
         <div className="space-y-2">
           <p className="text-sm font-medium">Strengths</p>
-          <textarea
+          <Textarea
             value={strengths}
             onChange={(event) => setStrengths(event.target.value)}
             placeholder="What went well? What are your strengths?"
             rows={4}
-            className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
           />
+          {fieldErrors.strengths && (
+            <p className="text-xs text-red-600">{fieldErrors.strengths}</p>
+          )}
         </div>
 
         <div className="space-y-2">
           <p className="text-sm font-medium">Challenges</p>
-          <textarea
+          <Textarea
             value={challenges}
             onChange={(event) => setChallenges(event.target.value)}
             placeholder="What obstacles or challenges did you run into?"
             rows={4}
-            className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
           />
+          {fieldErrors.challenges && (
+            <p className="text-xs text-red-600">{fieldErrors.challenges}</p>
+          )}
         </div>
 
         <div className="space-y-2">
           <p className="text-sm font-medium">Additional comments (optional)</p>
-          <textarea
+          <Textarea
             value={additionalComments}
             onChange={(event) => setAdditionalComments(event.target.value)}
             placeholder="Anything else you'd like to add?"
             rows={3}
-            className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
       </div>

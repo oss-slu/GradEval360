@@ -14,6 +14,24 @@ export const ExpectationSettingSchema = z.object({
   gaAcknowledgedAt: z.string().optional(),
 });
 
+export const MentorExpectationSettingSchema = z
+  .object({
+    goals: z
+      .array(z.string().trim().min(5, "Each goal must be at least 5 characters"))
+      .min(1, "At least 1 goal is required")
+      .max(5, "You can add at most 5 goals"),
+    responsibilities: z
+      .string()
+      .trim()
+      .min(10, "Responsibilities must be at least 10 characters"),
+    weeklyHours: z.number().min(1).max(20),
+    jobCategory: z.string().trim().min(2, "Job category is required"),
+    expectedOutputs: z.string().trim().min(5, "Expected outputs are required"),
+    expectationsMeetingDate: z.string().trim().min(4, "Meeting date is required"),
+    mentorNotes: z.string().trim().optional(),
+  })
+  .strict();
+
 // Strict schema for GA acknowledgment payload only
 export const GAAcknowledgeExpectationsSchema = z
   .object({
@@ -26,6 +44,7 @@ export const GAAcknowledgeExpectationsSchema = z
 
 // TypeScript type inference
 export type ExpectationSettingInput = z.infer<typeof ExpectationSettingSchema>;
+export type MentorExpectationSettingInput = z.infer<typeof MentorExpectationSettingSchema>;
 export type GAAcknowledgeExpectationsInput = z.infer<typeof GAAcknowledgeExpectationsSchema>;
 
 // Shared Constants for the UI
@@ -70,6 +89,7 @@ export const MentorEvaluationSchema = z.object({
 export const AppointmentSchema = z.object({
 
   id: z.string().uuid(),
+  appointmentCode: z.string(),
 
   gaId: z.string().uuid(),
   mentorId: z.string().uuid(),

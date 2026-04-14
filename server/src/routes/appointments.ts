@@ -6,14 +6,67 @@ import { requireAuth } from "../middleware/auth.js"; // adjust path if needed
 import {
   APPOINTMENT_STATUS,
   GAAcknowledgeExpectationsSchema,
+  MentorExpectationSettingSchema,
   SelfEvaluationSchema,
 } from "../../../shared/schemas/appointment.js";
+import { generateAppointmentCode } from "../lib/appointment-code.js";
 
 const router = Router();
 //removed: requireAuth
+
+async function ensureAppointmentCodes(records: any[]) {
+  const updates: Array<{ id: string; code: string }> = [];
+
+  for (const appt of records) {
+    if (!appt.appointmentCode) {
+      updates.push({ id: appt.id, code: generateAppointmentCode() });
+    }
+  }
+
+  if (!updates.length) return records;
+
+  await Promise.all(
+    updates.map(({ id, code }) =>
+      db.update(appointments).set({ appointmentCode: code }).where(eq(appointments.id, id))
+    )
+  );
+
+  return records.map((appt) => {
+    const updated = updates.find((update) => update.id === appt.id);
+    return updated ? { ...appt, appointmentCode: updated.code } : appt;
+  });
+}
+
+async function enrichAppointments(records: any[]) {
+  const safeResult = records ?? [];
+  if (!safeResult.length) return safeResult;
+
+  const userIds = Array.from(
+    new Set(safeResult.flatMap((appt: any) => [appt.gaId, appt.mentorId].filter(Boolean)))
+  );
+
+  const userRows = await db
+    .select({ id: users.id, fullName: users.fullName })
+    .from(users)
+    .where(inArray(users.id, userIds));
+
+  const userMap = new Map(userRows.map((row) => [row.id, row.fullName]));
+
+  return safeResult.map((appt: any) => ({
+    ...appt,
+    gaName: userMap.get(appt.gaId) ?? null,
+    mentorName: userMap.get(appt.mentorId) ?? null,
+  }));
+}
+
 router.post("/:id/self-eval", requireAuth, async (req: any, res) => {
   try {
+    const user = req.user;
     const { id } = req.params;
+
+    if (user.role !== "GA") {
+      return res.status(403).json({ error: "Only Graduate Assistants can submit self-evaluations" });
+    }
 
     const parsed = SelfEvaluationSchema.safeParse(req.body);
 
@@ -22,12 +75,16 @@ router.post("/:id/self-eval", requireAuth, async (req: any, res) => {
     }
 
     const [appointment] = await db
-      .select({ status: appointments.status })
+      .select({ status: appointments.status, gaId: appointments.gaId })
       .from(appointments)
       .where(eq(appointments.id, id));
 
     if (!appointment) {
       return res.status(404).json({ error: "Appointment not found" });
+    }
+
+    if (appointment.gaId !== user.id) {
+      return res.status(403).json({ error: "You do not have access to this appointment" });
     }
 
     if (appointment.status !== APPOINTMENT_STATUS.AWAITING_SELF_EVAL) {
@@ -58,7 +115,12 @@ type AppointmentExpectationDraft = {
   goals?: string[];
   weeklyHours?: number;
   responsibilities?: string;
+  jobCategory?: string;
+  expectedOutputs?: string;
+  expectationsMeetingDate?: string;
   mentorNotes?: string;
+  mentorAcknowledged?: boolean;
+  mentorAcknowledgedAt?: string;
   gaAcknowledged?: boolean;
   gaAcknowledgedAt?: string;
 };
@@ -94,13 +156,21 @@ router.get("/", requireAuth, async (req: any, res) => {
 
         //Admin - appointments 
         else if (user.role === "Admin") {
-            if (!user.unitId) {
-                return res.status(403).json({ error: "Forbidden" });
+            if (Array.isArray(user.unitIds) && user.unitIds.length > 0) {
+                result = await db
+                    .select()
+                    .from(appointments)
+                    .where(inArray(appointments.unitId, user.unitIds));
+            } else if (user.unitId) {
+                result = await db
+                    .select()
+                    .from(appointments)
+                    .where(eq(appointments.unitId, user.unitId));
+            } else {
+                result = await db
+                    .select()
+                    .from(appointments);
             }
-            result = await db
-                .select()
-                .from(appointments)
-                .where(eq(appointments.unitId, user.unitId));
         }
 
         //Those with an UNKNOWN ROLE
@@ -108,33 +178,116 @@ router.get("/", requireAuth, async (req: any, res) => {
             return res.status(403).json({ error: "Forbidden" });
         }
 
-        const safeResult = result ?? [];
-        if (!safeResult.length) {
-            return res.json(safeResult);
-        }
-
-        const userIds = Array.from(
-            new Set(safeResult.flatMap((appt: any) => [appt.gaId, appt.mentorId].filter(Boolean)))
-        );
-
-        const userRows = await db
-            .select({ id: users.id, fullName: users.fullName })
-            .from(users)
-            .where(inArray(users.id, userIds));
-
-        const userMap = new Map(userRows.map((row) => [row.id, row.fullName]));
-
-        const enriched = safeResult.map((appt: any) => ({
-            ...appt,
-            gaName: userMap.get(appt.gaId) ?? null,
-            mentorName: userMap.get(appt.mentorId) ?? null,
-        }));
+        const withCodes = await ensureAppointmentCodes(result ?? []);
+        const enriched = await enrichAppointments(withCodes);
 
         return res.json(enriched);
     } catch(error) {
         console.error("Error fetching appointments:", error);
         return res.status(500).json({ error: "Server error" });
     } 
+});
+
+router.get("/:id", requireAuth, async (req: any, res) => {
+  try {
+    const user = req.user;
+    const appointmentId = req.params.id;
+
+    const [appointment] = await db
+      .select()
+      .from(appointments)
+      .where(eq(appointments.id, appointmentId));
+
+    if (!appointment) {
+      return res.status(404).json({ error: "Appointment not found" });
+    }
+
+    if (user.role === "GA" && appointment.gaId !== user.id) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    if (user.role === "Mentor" && appointment.mentorId !== user.id) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    if (user.role === "Admin") {
+      const allowedUnits = Array.isArray(user.unitIds) ? user.unitIds : [];
+      if (allowedUnits.length > 0 && !allowedUnits.includes(appointment.unitId)) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+      if (!allowedUnits.length && user.unitId && appointment.unitId !== user.unitId) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+    }
+
+    const [withCode] = await ensureAppointmentCodes([appointment]);
+    const [enriched] = await enrichAppointments([withCode]);
+
+    return res.json(enriched);
+  } catch (error) {
+    console.error("Error fetching appointment:", error);
+    return res.status(500).json({ error: "Server error" });
+  }
+});
+
+router.patch("/:id/expectations/setup", requireAuth, async (req: any, res) => {
+  try {
+    const user = req.user;
+    const appointmentId = req.params.id;
+
+    if (user.role !== "Mentor") {
+      return res.status(403).json({ error: "Only mentors can set expectations" });
+    }
+
+    const parsed = MentorExpectationSettingSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: "Invalid request payload",
+        details: parsed.error.flatten(),
+      });
+    }
+
+    const [appointment] = await db
+      .select()
+      .from(appointments)
+      .where(and(eq(appointments.id, appointmentId), eq(appointments.mentorId, user.id)));
+
+    if (!appointment) {
+      return res.status(404).json({ error: "Appointment not found" });
+    }
+
+    if (appointment.status !== APPOINTMENT_STATUS.AWAITING) {
+      return res.status(400).json({
+        error: `Appointment must be in ${APPOINTMENT_STATUS.AWAITING} status to set expectations`,
+      });
+    }
+
+    const existingExpectationData: AppointmentExpectationDraft =
+      appointment.expectationData && typeof appointment.expectationData === "object"
+        ? (appointment.expectationData as AppointmentExpectationDraft)
+        : {};
+
+    const updatedExpectationData: AppointmentExpectationDraft = {
+      ...existingExpectationData,
+      ...parsed.data,
+      mentorAcknowledged: true,
+      mentorAcknowledgedAt: new Date().toISOString(),
+    };
+
+    const [updatedAppointment] = await db
+      .update(appointments)
+      .set({
+        expectationData: updatedExpectationData,
+        status: APPOINTMENT_STATUS.SET,
+      })
+      .where(eq(appointments.id, appointmentId))
+      .returning();
+
+    return res.json(updatedAppointment);
+  } catch (error) {
+    console.error("Error setting expectations:", error);
+    return res.status(500).json({ error: "Server error" });
+  }
 });
 
 // PATCH /api/appointments/:id/expectations

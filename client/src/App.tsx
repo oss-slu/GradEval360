@@ -8,6 +8,8 @@ import ProtectedRoute from "./components/auth/protected-route";
 import LoginPage from "@/pages/login";
 import { WelcomeBanner } from "@/components/dashboard/welcome-banner";
 import AppointmentsPage from "@/pages/appointments";
+import AppointmentDetailsPage from "@/pages/appointment-details";
+import { Toaster } from "@/components/ui/toaster";
 
 const { useSession } = authClient;
 
@@ -67,6 +69,7 @@ function AppRoutes() {
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<DashboardShell />} />
         <Route path="/appointments" element={<AppointmentsPage />} />
+        <Route path="/appointments/:id" element={<AppointmentDetailsPage />} />
       </Route>
       <Route path="*" element={<Navigate to={isAuthed ? "/dashboard" : "/login"} replace />} />
     </Routes>
@@ -74,5 +77,10 @@ function AppRoutes() {
 }
 
 export default function App() {
-  return <AppRoutes />;
+  return (
+    <>
+      <AppRoutes />
+      <Toaster />
+    </>
+  );
 }
