@@ -1,4 +1,4 @@
-import { authClient } from "@/lib/auth-client";
+import { authClient, authFetch } from "@/lib/auth-client";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,23 @@ export function AppHeader() {
   )}`;
 
   async function handleLogout() {
-    await authClient.signOut();
+    try {
+      const signOutPromise = authClient.signOut();
+      if (signOutPromise && typeof (signOutPromise as Promise<void>).catch === "function") {
+        void (signOutPromise as Promise<void>).catch(() => {});
+      }
+    } catch {
+      // ignore and fall back to direct sign-out call below
+    }
+
+    try {
+      const apiPromise = authFetch("/api/auth/sign-out", { method: "POST" });
+      if (apiPromise && typeof (apiPromise as Promise<Response>).catch === "function") {
+        void (apiPromise as Promise<Response>).catch(() => {});
+      }
+    } catch {
+      // ignore; we will still clear local state and redirect
+    }
     localStorage.clear();
     sessionStorage.clear();
     window.location.assign("/login");
@@ -55,8 +71,13 @@ export function AppHeader() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={handleLogout}
-              className="text-muted-foreground hover:text-destructive"
+              type="button"
+              onClick={(event) => {
+                event.preventDefault();
+                console.log("logout click");
+                handleLogout();
+              }}
+              className="cursor-pointer text-muted-foreground hover:text-destructive"
             >
               Logout
             </Button>

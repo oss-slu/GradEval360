@@ -113,6 +113,7 @@ Run these from the repository root unless noted otherwise:
 - Start backend: `cd server && npm run dev`
 - Start frontend: `cd client && npm run dev`
 - Initialize DB (schema + seed): `cd server && npm run db:setup`
+- Push DB schema changes: `cd GradEval360/server && npm run db:push`
 - Auth smoke test: `cd server && npm run smoke:auth`
 
 ---

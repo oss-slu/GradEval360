@@ -1,4 +1,5 @@
 import { pgTable, uuid, text, timestamp, jsonb, pgEnum, boolean } from 'drizzle-orm/pg-core';
+import { sql } from "drizzle-orm";
 import { UserRoleEnum } from "../../../shared/src/types";
 
 // Enum for the 3-part annual cycle
@@ -106,6 +107,12 @@ export const authVerifications = pgTable("verification", {
 
 export const appointments = pgTable('appointments', {
   id: uuid('id').primaryKey().defaultRandom(),
+  appointmentCode: text('appointment_code')
+    .notNull()
+    .unique()
+    .default(
+      sql`('GEA-' || to_char(now(), 'YYYYMMDD') || '-' || upper(substr(md5(random()::text || clock_timestamp()::text), 1, 6)))`
+    ),
 
   gaId: uuid('ga_id').references(() => users.id).notNull(),
   mentorId: uuid('mentor_id').references(() => users.id).notNull(),

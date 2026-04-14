@@ -1,6 +1,7 @@
 import { db } from './index.js';
 import { users, appointments, userUnits } from './schema.js';
 import type { InferInsertModel } from 'drizzle-orm';
+import { generateAppointmentCode } from "../lib/appointment-code.js";
 
 async function seed() {
   console.log('Starting safe seeding process...');
@@ -68,6 +69,7 @@ async function seed() {
         mentorId: mentorA.id,
         unitId: 'UNIT-A',
         status: 'AwaitingExpectationSetting' as const, 
+        appointmentCode: generateAppointmentCode(),
         expectationData: {} as any,
         selfEvaluationData: {} as any,
         mentorEvaluationData: {} as any
@@ -77,6 +79,7 @@ async function seed() {
         mentorId: mentorB.id,
         unitId: 'UNIT-B',
         status: 'ExpectationSet' as const,
+        appointmentCode: generateAppointmentCode(),
         expectationData: {
           goals: ["Master React Query", "Implement Zod Validation"],
           weeklyHours: 20,
@@ -93,6 +96,7 @@ async function seed() {
         mentorId: mentorA.id,
         unitId: 'UNIT-A',
         status: 'SelfEvaluationCompleted' as const,
+        appointmentCode: generateAppointmentCode(),
         expectationData: { 
           goals: ["Research Assistance"], 
           weeklyHours: 15, 
@@ -110,6 +114,7 @@ async function seed() {
         mentorId: mentorB.id,
         unitId: 'UNIT-B',
         status: 'AwaitingSignOff' as const,
+        appointmentCode: generateAppointmentCode(),
         expectationData: { goals: ["Lab Maintenance"] },
         selfEvaluationData: { 
           goalProgress: "Resolved maintenance backlog and improved documentation."
@@ -127,6 +132,7 @@ async function seed() {
         mentorId: mentorA.id,
         unitId: 'UNIT-A',
         status: 'AwaitingMentorEvaluation' as const,
+        appointmentCode: generateAppointmentCode(),
         expectationData: { 
           goals: ["Discussion Section Support"], 
           weeklyHours: 10, 
@@ -142,6 +148,7 @@ async function seed() {
         mentorId: mentorB.id,
         unitId: 'UNIT-B',
         status: 'MentorEvaluationCompleted' as const,
+        appointmentCode: generateAppointmentCode(),
         expectationData: { 
           goals: ["Grading Support"], 
           weeklyHours: 8, 
