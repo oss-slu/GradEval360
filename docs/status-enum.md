@@ -1,9 +1,12 @@
 # Appointment Status Enum Reference
 
-This document describes the current appointment status workflow as implemented in
-`server/src/db/schema.ts`. It maps each status to:
-what the UI should display, who acts, what action advances the status, and which
-data is required at that stage.
+This document describes the Milestone 2 annual evaluation workflow as implemented in:
+
+- [server/src/db/schema.ts](../server/src/db/schema.ts)
+- [server/src/routes/appointments.ts](../server/src/routes/appointments.ts)
+- [client/src/pages/appointment-details.tsx](../client/src/pages/appointment-details.tsx)
+
+The appointment details page is the primary action surface for every actor after appointment creation.
 
 ## Status Flow
 
@@ -19,69 +22,90 @@ data is required at that stage.
    - `expectationData.expectedOutputs`
    - `expectationData.expectationsMeetingDate`
    - `expectationData.mentorAcknowledged = true`
-   - `expectationData.mentorAcknowledgedAt` (timestamp string)
-   - Optional: `expectationData.mentorNotes`
+   - `expectationData.mentorAcknowledgedAt`
    Next status: `ExpectationSet`
 
 2. **ExpectationSet**
-   Displayed when: Expectations are saved and awaiting GA acknowledgment.
+   Displayed when: Mentor expectations are saved and awaiting GA acknowledgment.
    Primary actor: GA
-   Action to advance: GA reviews and acknowledges expectations.
+   Action to advance: GA reviews the plan and adds 1 to 3 personal goals.
    Required data:
    - `expectationData.gaAcknowledged = true`
-   - `expectationData.gaAcknowledgedAt` (date string)
+   - `expectationData.gaAcknowledgedAt`
    Next status: `AwaitingSelfEvaluation`
 
 3. **AwaitingSelfEvaluation**
-   Displayed when: GA has acknowledged expectations, waiting on self-evaluation.
+   Displayed when: GA has acknowledged expectations and self-evaluation is pending.
    Primary actor: GA
    Action to advance: GA submits self-evaluation.
    Required data:
    - `selfEvaluationData.goalProgress`
-   - Optional: `selfEvaluationData.strengths`
-   - Optional: `selfEvaluationData.challenges`
+   - `selfEvaluationData.strengths`
+   - `selfEvaluationData.challenges`
    - Optional: `selfEvaluationData.additionalComments`
    Next status: `SelfEvaluationCompleted`
 
 4. **SelfEvaluationCompleted**
-   Displayed when: GA self-evaluation is complete and mentor review has not started.
+   Displayed when: GA self-evaluation is complete and mentor evaluation can begin.
    Primary actor: Mentor
-   Action to advance: Mentor begins or submits evaluation.
-   Required data to move forward: none yet, mentor should complete evaluation.
-   Next status: `AwaitingMentorEvaluation`
+   Action to advance: Mentor completes evaluation.
+   Required data to move forward: none yet, but mentor evaluation is now enabled.
+   Next status: `MentorEvaluationCompleted`
 
 5. **AwaitingMentorEvaluation**
-   Displayed when: Mentor is expected to complete evaluation.
+   Displayed when: A record is explicitly parked for mentor completion.
    Primary actor: Mentor
-   Action to advance: Mentor submits evaluation.
+   Action to advance: Mentor completes evaluation from the appointment details page.
    Required data:
-   - `mentorEvaluationData.ratings` (rubric scores)
-   - Optional: `mentorEvaluationData.narrative`
-   - Optional: `mentorEvaluationData.overallSummary`
-   - Optional: `mentorEvaluationData.finalMeetingDate`
+   - `mentorEvaluationData.ratings`
+   - `mentorEvaluationData.narrative`
+   - `mentorEvaluationData.overallSummary`
+   - `mentorEvaluationData.finalMeetingDate`
    Next status: `MentorEvaluationCompleted`
 
 6. **MentorEvaluationCompleted**
-   Displayed when: Mentor evaluation is complete, awaiting GA sign-off.
-   Primary actor: GA
-   Action to advance: GA signs off after final meeting.
+   Displayed when: Mentor evaluation is submitted and admin review is next.
+   Primary actor: Admin
+   Action to advance: Admin prepares final sign-off.
    Required data:
-   - `mentorEvaluationData.gaSignOff = true`
-   - `mentorEvaluationData.gaSignOffAt` (date string)
+   - `mentorEvaluationData.signOffDecision`
+   - `mentorEvaluationData.signOffNotes`
+   - `mentorEvaluationData.signOffPreparedAt`
+   - `mentorEvaluationData.signOffPreparedBy`
    Next status: `AwaitingSignOff`
 
 7. **AwaitingSignOff**
-   Displayed when: Final meeting date is recorded and GA sign-off is pending or just initiated.
-   Primary actor: GA
-   Action to advance: GA completes sign-off.
+   Displayed when: Admin sign-off notes are prepared and final acknowledgment is pending.
+   Primary actor: Admin
+   Action to advance: Admin confirms final acknowledgment.
    Required data:
-   - `mentorEvaluationData.finalMeetingDate`
-   - `mentorEvaluationData.gaSignOff = true`
-   - `mentorEvaluationData.gaSignOffAt`
+   - `mentorEvaluationData.finalAcknowledged = true`
+   - `mentorEvaluationData.finalAcknowledgedAt`
+   - `mentorEvaluationData.finalAcknowledgedBy`
    Next status: `FinalEvaluated`
 
 8. **FinalEvaluated**
    Displayed when: Evaluation cycle is fully complete.
-   Primary actor: System (read-only)
-   Action to advance: none (terminal status).
-   Required data: all evaluation blobs should be present.
+   Primary actor: System / read-only
+   Action to advance: none
+   Required data: expectation, self-evaluation, mentor evaluation, and sign-off data should all be present.
+
+## Actor Ownership Summary
+
+- Mentor owns:
+  - expectation setting
+  - mentor evaluation
+- GA owns:
+  - expectation acknowledgment
+  - self-evaluation
+- Admin owns:
+  - sign-off preparation
+  - final acknowledgment
+
+## Reporting Notes
+
+The dashboard summary and appointments list reflect this same status model:
+
+- appointments by status
+- completion progress toward `FinalEvaluated`
+- pending / incomplete items within the signed-in user’s role scope

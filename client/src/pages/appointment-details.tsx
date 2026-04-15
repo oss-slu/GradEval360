@@ -3,11 +3,13 @@ import { Link, useParams } from "react-router-dom";
 
 import { AppHeader } from "@/components/app-header";
 import { AppSidebar } from "@/components/app-sidebar";
+import ExpectationReviewForm from "@/components/appointments/expectation-review-form";
+import ExpectationSettingForm from "@/components/appointments/expectation-setting-form";
+import FinalSignOffForm from "@/components/appointments/final-signoff-form";
+import MentorEvalForm from "@/components/appointments/mentor-eval-form";
+import SelfEvalForm from "@/components/appointments/self-eval-form";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { authClient, authFetch } from "@/lib/auth-client";
-import ExpectationSettingForm from "@/components/appointments/expectation-setting-form";
-import ExpectationReviewForm from "@/components/appointments/expectation-review-form";
-import SelfEvalForm from "@/components/appointments/self-eval-form";
 
 type AppointmentDetails = {
   id: string;
@@ -27,7 +29,6 @@ type AppointmentDetails = {
   unitId?: string;
   gaName?: string;
   mentorName?: string;
-  adminName?: string;
   expectationData?: {
     goals?: string[];
     weeklyHours?: number;
@@ -52,9 +53,73 @@ type AppointmentDetails = {
     narrative?: string;
     overallSummary?: string;
     finalMeetingDate?: string;
-    gaSignOff?: boolean;
-    gaSignOffAt?: string;
+    evaluationSubmittedAt?: string;
+    evaluationSubmittedBy?: string;
+    signOffDecision?: string;
+    signOffNotes?: string;
+    signOffPreparedAt?: string;
+    signOffPreparedBy?: string;
+    finalAcknowledged?: boolean;
+    finalAcknowledgedAt?: string;
+    finalAcknowledgedBy?: string;
   };
+};
+
+const STATUS_COPY: Record<
+  string,
+  {
+    label: string;
+    owner: string;
+    helper: string;
+  }
+> = {
+  AwaitingExpectationSetting: {
+    label: "Awaiting expectation setting",
+    owner: "Mentor",
+    helper: "Mentor should define the work plan, goals, and meeting details.",
+  },
+  ExpectationSet: {
+    label: "Expectation set",
+    owner: "GA",
+    helper: "GA should review the plan and acknowledge expectations.",
+  },
+  AwaitingSelfEvaluation: {
+    label: "Awaiting self-evaluation",
+    owner: "GA",
+    helper: "GA reflection is the next required action.",
+  },
+  SelfEvaluationCompleted: {
+    label: "Self-evaluation completed",
+    owner: "Mentor",
+    helper: "Mentor evaluation is ready to be submitted.",
+  },
+  AwaitingMentorEvaluation: {
+    label: "Awaiting mentor evaluation",
+    owner: "Mentor",
+    helper: "Mentor evaluation is still pending.",
+  },
+  MentorEvaluationCompleted: {
+    label: "Mentor evaluation completed",
+    owner: "Admin",
+    helper: "Admin should prepare final sign-off and review completion.",
+  },
+  AwaitingSignOff: {
+    label: "Awaiting sign-off",
+    owner: "Admin",
+    helper: "Admin can finalize the evaluation cycle from this page.",
+  },
+  FinalEvaluated: {
+    label: "Final evaluated",
+    owner: "Complete",
+    helper: "All Milestone 2 evaluation steps are complete.",
+  },
+};
+
+const ratingLabels: Record<string, string> = {
+  communication: "Communication",
+  dependability: "Dependability",
+  initiative: "Initiative",
+  qualityOfWork: "Quality of work",
 };
 
 function formatDateTime(appointment: AppointmentDetails) {
@@ -78,6 +143,17 @@ function formatDateTime(appointment: AppointmentDetails) {
       return `${rawDateTime} at ${appointment.time}`;
     }
     return rawDateTime;
+  }
+
+  return parsed.toLocaleString();
+}
+
+function formatTimestamp(value?: string) {
+  if (!value) return null;
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
   }
 
   return parsed.toLocaleString();
@@ -125,51 +201,41 @@ export default function AppointmentDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadAppointment() {
-      try {
+  async function refreshAppointment(options?: { preserveLoading?: boolean }) {
+    try {
+      if (!options?.preserveLoading) {
         setLoading(true);
-        setError("");
+      }
+      setError("");
 
-        if (!id) {
-          setError("Missing appointment ID.");
-          return;
-        }
+      if (!id) {
+        setError("Missing appointment ID.");
+        return;
+      }
 
-        const response = await authFetch(`/api/appointments/${id}`, { method: "GET" });
+      const response = await authFetch(`/api/appointments/${id}`, { method: "GET" });
+      if (!response.ok) {
+        throw new Error(`Failed to load appointment (${response.status})`);
+      }
 
-        if (!response.ok) {
-          throw new Error(`Failed to load appointment (${response.status})`);
-        }
-
-        const data = (await response.json()) as AppointmentDetails;
-        if (isMounted) {
-          setAppointment(data);
-        }
-      } catch (err) {
-        if (!isMounted) return;
-        const message =
-          err instanceof Error ? err.message : "Something went wrong while loading the appointment.";
-        setError(message);
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+      const data = (await response.json()) as AppointmentDetails;
+      setAppointment(data);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Something went wrong while loading the appointment.";
+      setError(message);
+    } finally {
+      if (!options?.preserveLoading) {
+        setLoading(false);
       }
     }
+  }
 
-    loadAppointment();
-
-    return () => {
-      isMounted = false;
-    };
+  useEffect(() => {
+    void refreshAppointment();
   }, [id]);
 
-  const expectationGoals = useMemo(() => {
-    return appointment?.expectationData?.goals ?? [];
-  }, [appointment?.expectationData?.goals]);
+  const expectationGoals = useMemo(() => appointment?.expectationData?.goals ?? [], [appointment]);
 
   const userRoleRaw =
     (session?.user as any)?.role ??
@@ -177,6 +243,20 @@ export default function AppointmentDetailsPage() {
     (session?.user as any)?.metadata?.role;
 
   const userRole = userRoleRaw ? String(userRoleRaw) : null;
+  const statusInfo = appointment?.status ? STATUS_COPY[appointment.status] : null;
+
+  const canSetExpectations =
+    userRole === "Mentor" && appointment?.status === "AwaitingExpectationSetting";
+  const canAcknowledgeExpectations = userRole === "GA" && appointment?.status === "ExpectationSet";
+  const canSubmitSelfEval = userRole === "GA" && appointment?.status === "AwaitingSelfEvaluation";
+  const canSubmitMentorEval =
+    userRole === "Mentor" &&
+    (appointment?.status === "SelfEvaluationCompleted" ||
+      appointment?.status === "AwaitingMentorEvaluation");
+  const canCompleteSignOff =
+    userRole === "Admin" &&
+    (appointment?.status === "MentorEvaluationCompleted" ||
+      appointment?.status === "AwaitingSignOff");
 
   return (
     <SidebarProvider defaultOpen={false}>
@@ -186,7 +266,7 @@ export default function AppointmentDetailsPage() {
           <AppHeader />
           <main className="flex-1 overflow-y-auto bg-slate-50/50 p-8">
             <div className="mx-auto max-w-5xl space-y-6">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">
                     <Link to="/appointments" className="hover:underline">
@@ -204,7 +284,7 @@ export default function AppointmentDetailsPage() {
                   )}
                 </div>
                 <span className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium text-slate-700">
-                  {appointment?.status ?? "Unknown"}
+                  {statusInfo?.label ?? appointment?.status ?? "Unknown"}
                 </span>
               </div>
 
@@ -223,96 +303,121 @@ export default function AppointmentDetailsPage() {
                 </div>
               ) : (
                 <>
-                  <div className="rounded-xl border bg-white p-6 shadow-sm">
-                    <h2 className="text-lg font-semibold">Overview</h2>
-                    <dl className="mt-4 grid gap-4 text-sm sm:grid-cols-2">
-                      <div>
-                        <dt className="text-muted-foreground">Scheduled</dt>
-                        <dd className="font-medium">{formatDateTime(appointment)}</dd>
+                  <div className="grid gap-4 lg:grid-cols-[1.4fr,0.9fr]">
+                    <div className="rounded-xl border bg-white p-6 shadow-sm">
+                      <h2 className="text-lg font-semibold">Overview</h2>
+                      <dl className="mt-4 grid gap-4 text-sm sm:grid-cols-2">
+                        <div>
+                          <dt className="text-muted-foreground">Scheduled</dt>
+                          <dd className="font-medium">{formatDateTime(appointment)}</dd>
+                        </div>
+                        <div>
+                          <dt className="text-muted-foreground">Unit</dt>
+                          <dd className="font-medium">{appointment.unitId ?? "Not assigned"}</dd>
+                        </div>
+                        <div>
+                          <dt className="text-muted-foreground">GA</dt>
+                          <dd className="font-medium">{appointment.gaName ?? "Not assigned"}</dd>
+                        </div>
+                        <div>
+                          <dt className="text-muted-foreground">Mentor</dt>
+                          <dd className="font-medium">{appointment.mentorName ?? "Not assigned"}</dd>
+                        </div>
+                      </dl>
+                    </div>
+
+                    <div className="rounded-xl border bg-white p-6 shadow-sm">
+                      <h2 className="text-lg font-semibold">Current workflow step</h2>
+                      <div className="mt-4 space-y-3 text-sm">
+                        <div>
+                          <p className="text-muted-foreground">Status</p>
+                          <p className="font-medium">
+                            {statusInfo?.label ?? appointment.status ?? "Unknown"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Primary actor</p>
+                          <p className="font-medium">{statusInfo?.owner ?? "Unknown"}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Next action</p>
+                          <p className="font-medium">{statusInfo?.helper ?? "No action available."}</p>
+                        </div>
                       </div>
-                      <div>
-                        <dt className="text-muted-foreground">Unit</dt>
-                        <dd className="font-medium">{appointment.unitId ?? "Not assigned"}</dd>
-                      </div>
-                      <div>
-                        <dt className="text-muted-foreground">GA</dt>
-                        <dd className="font-medium">{appointment.gaName ?? "Not assigned"}</dd>
-                      </div>
-                      <div>
-                        <dt className="text-muted-foreground">Mentor</dt>
-                        <dd className="font-medium">{appointment.mentorName ?? "Not assigned"}</dd>
-                      </div>
-                    </dl>
+                    </div>
                   </div>
 
+                  {(canSetExpectations ||
+                    canAcknowledgeExpectations ||
+                    canSubmitSelfEval ||
+                    canSubmitMentorEval ||
+                    canCompleteSignOff) && (
+                    <div className="space-y-4">
+                      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                        <h2 className="text-lg font-semibold">Required action</h2>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Complete the next Milestone 2 step directly from this page.
+                        </p>
+                        <div className="mt-4">
+                          {canSetExpectations && (
+                            <ExpectationSettingForm
+                              appointmentId={appointment.id}
+                              onSuccess={() => {
+                                void refreshAppointment({ preserveLoading: true });
+                              }}
+                            />
+                          )}
+                          {canAcknowledgeExpectations && (
+                            <ExpectationReviewForm
+                              appointmentId={appointment.id}
+                              onSuccess={() => {
+                                void refreshAppointment({ preserveLoading: true });
+                              }}
+                            />
+                          )}
+                          {canSubmitSelfEval && (
+                            <SelfEvalForm
+                              appointmentId={appointment.id}
+                              onSuccess={() => {
+                                void refreshAppointment({ preserveLoading: true });
+                              }}
+                            />
+                          )}
+                          {canSubmitMentorEval && (
+                            <MentorEvalForm
+                              appointmentId={appointment.id}
+                              onSuccess={() => {
+                                void refreshAppointment({ preserveLoading: true });
+                              }}
+                            />
+                          )}
+                          {canCompleteSignOff && (
+                            <FinalSignOffForm
+                              appointmentId={appointment.id}
+                              status={appointment.status ?? ""}
+                              onSuccess={() => {
+                                void refreshAppointment({ preserveLoading: true });
+                              }}
+                            />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="space-y-4">
-                    {userRole === "Mentor" && appointment.status === "AwaitingExpectationSetting" && (
-                      <ExpectationSettingForm
-                        appointmentId={appointment.id}
-                        onSuccess={() => {
-                          void (async () => {
-                            if (!id) return;
-                            const response = await authFetch(`/api/appointments/${id}`, {
-                              method: "GET",
-                            });
-                            if (response.ok) {
-                              const data = (await response.json()) as AppointmentDetails;
-                              setAppointment(data);
-                            }
-                          })();
-                        }}
-                      />
-                    )}
-                    {userRole === "GA" && appointment.status === "ExpectationSet" && (
-                      <ExpectationReviewForm
-                        appointmentId={appointment.id}
-                        onSuccess={() => {
-                          void (async () => {
-                            if (!id) return;
-                            const response = await authFetch(`/api/appointments/${id}`, {
-                              method: "GET",
-                            });
-                            if (response.ok) {
-                              const data = (await response.json()) as AppointmentDetails;
-                              setAppointment(data);
-                            }
-                          })();
-                        }}
-                      />
-                    )}
-                    {userRole === "GA" && appointment.status === "AwaitingSelfEvaluation" && (
-                      <SelfEvalForm
-                        appointmentId={appointment.id}
-                        onSuccess={() => {
-                          void (async () => {
-                            if (!id) return;
-                            const response = await authFetch(`/api/appointments/${id}`, {
-                              method: "GET",
-                            });
-                            if (response.ok) {
-                              const data = (await response.json()) as AppointmentDetails;
-                              setAppointment(data);
-                            }
-                          })();
-                        }}
-                      />
-                    )}
-                    <TimelineItem title="Expectation Setting" statusLabel="Expectation Review">
+                    <TimelineItem title="Expectation Setting" statusLabel="Expectation review">
                       <div className="grid gap-3 sm:grid-cols-2">
                         {appointment.expectationData?.jobCategory && (
                           <div>
                             <p className="text-muted-foreground">Job category</p>
-                            <p className="font-medium">
-                              {appointment.expectationData.jobCategory}
-                            </p>
+                            <p className="font-medium">{appointment.expectationData.jobCategory}</p>
                           </div>
                         )}
                         {typeof appointment.expectationData?.weeklyHours === "number" && (
                           <div>
                             <p className="text-muted-foreground">Weekly hours</p>
-                            <p className="font-medium">
-                              {appointment.expectationData.weeklyHours}
-                            </p>
+                            <p className="font-medium">{appointment.expectationData.weeklyHours}</p>
                           </div>
                         )}
                       </div>
@@ -328,17 +433,13 @@ export default function AppointmentDetailsPage() {
                       {appointment.expectationData?.responsibilities && (
                         <div>
                           <p className="text-muted-foreground">Responsibilities</p>
-                          <p className="font-medium">
-                            {appointment.expectationData.responsibilities}
-                          </p>
+                          <p className="font-medium">{appointment.expectationData.responsibilities}</p>
                         </div>
                       )}
                       {appointment.expectationData?.expectedOutputs && (
                         <div>
                           <p className="text-muted-foreground">Expected outputs</p>
-                          <p className="font-medium">
-                            {appointment.expectationData.expectedOutputs}
-                          </p>
+                          <p className="font-medium">{appointment.expectationData.expectedOutputs}</p>
                         </div>
                       )}
                       {appointment.expectationData?.expectationsMeetingDate && (
@@ -359,9 +460,7 @@ export default function AppointmentDetailsPage() {
                         <div>
                           <p className="text-muted-foreground">Mentor acknowledged</p>
                           <p className="font-medium">
-                            {new Date(
-                              appointment.expectationData.mentorAcknowledgedAt
-                            ).toLocaleString()}
+                            {formatTimestamp(appointment.expectationData.mentorAcknowledgedAt)}
                           </p>
                         </div>
                       )}
@@ -369,22 +468,18 @@ export default function AppointmentDetailsPage() {
                         <div>
                           <p className="text-muted-foreground">GA acknowledged</p>
                           <p className="font-medium">
-                            {new Date(
-                              appointment.expectationData.gaAcknowledgedAt
-                            ).toLocaleString()}
+                            {formatTimestamp(appointment.expectationData.gaAcknowledgedAt)}
                           </p>
                         </div>
                       )}
                     </TimelineItem>
 
-                    <TimelineItem title="Self-Evaluation" statusLabel="GA Reflection">
+                    <TimelineItem title="Self-Evaluation" statusLabel="GA reflection">
                       {appointment.selfEvaluationData?.goalProgress ? (
                         <>
                           <div>
                             <p className="text-muted-foreground">Goal progress</p>
-                            <p className="font-medium">
-                              {appointment.selfEvaluationData.goalProgress}
-                            </p>
+                            <p className="font-medium">{appointment.selfEvaluationData.goalProgress}</p>
                           </div>
                           <div>
                             <p className="text-muted-foreground">Strengths</p>
@@ -392,9 +487,7 @@ export default function AppointmentDetailsPage() {
                           </div>
                           <div>
                             <p className="text-muted-foreground">Challenges</p>
-                            <p className="font-medium">
-                              {appointment.selfEvaluationData.challenges}
-                            </p>
+                            <p className="font-medium">{appointment.selfEvaluationData.challenges}</p>
                           </div>
                           {appointment.selfEvaluationData.additionalComments && (
                             <div>
@@ -412,20 +505,48 @@ export default function AppointmentDetailsPage() {
                       )}
                     </TimelineItem>
 
-                    <TimelineItem title="Mentor Evaluation" statusLabel="Mentor Review">
+                    <TimelineItem title="Mentor Evaluation" statusLabel="Mentor review">
                       {appointment.mentorEvaluationData?.narrative ? (
                         <>
+                          {appointment.mentorEvaluationData.ratings &&
+                            Object.entries(appointment.mentorEvaluationData.ratings).length > 0 && (
+                              <div className="grid gap-3 sm:grid-cols-2">
+                                {Object.entries(appointment.mentorEvaluationData.ratings).map(
+                                  ([key, value]) => (
+                                    <div key={key}>
+                                      <p className="text-muted-foreground">
+                                        {ratingLabels[key] ?? key}
+                                      </p>
+                                      <p className="font-medium">{value} / 5</p>
+                                    </div>
+                                  )
+                                )}
+                              </div>
+                            )}
                           <div>
                             <p className="text-muted-foreground">Narrative</p>
+                            <p className="font-medium">{appointment.mentorEvaluationData.narrative}</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Overall summary</p>
                             <p className="font-medium">
-                              {appointment.mentorEvaluationData.narrative}
+                              {appointment.mentorEvaluationData.overallSummary}
                             </p>
                           </div>
-                          {appointment.mentorEvaluationData.overallSummary && (
+                          {appointment.mentorEvaluationData.finalMeetingDate && (
                             <div>
-                              <p className="text-muted-foreground">Overall summary</p>
+                              <p className="text-muted-foreground">Final meeting date</p>
                               <p className="font-medium">
-                                {appointment.mentorEvaluationData.overallSummary}
+                                {appointment.mentorEvaluationData.finalMeetingDate}
+                              </p>
+                            </div>
+                          )}
+                          {appointment.mentorEvaluationData.evaluationSubmittedAt && (
+                            <div>
+                              <p className="text-muted-foreground">Submitted by mentor</p>
+                              <p className="font-medium">
+                                {appointment.mentorEvaluationData.evaluationSubmittedBy ?? "Mentor"} on{" "}
+                                {formatTimestamp(appointment.mentorEvaluationData.evaluationSubmittedAt)}
                               </p>
                             </div>
                           )}
@@ -433,6 +554,49 @@ export default function AppointmentDetailsPage() {
                       ) : (
                         <p className="text-muted-foreground">
                           Mentor evaluation has not been submitted yet.
+                        </p>
+                      )}
+                    </TimelineItem>
+
+                    <TimelineItem title="Final Sign-Off" statusLabel="Admin completion">
+                      {appointment.mentorEvaluationData?.signOffDecision ? (
+                        <>
+                          <div>
+                            <p className="text-muted-foreground">Decision</p>
+                            <p className="font-medium">
+                              {appointment.mentorEvaluationData.signOffDecision}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Notes</p>
+                            <p className="font-medium">{appointment.mentorEvaluationData.signOffNotes}</p>
+                          </div>
+                          {appointment.mentorEvaluationData.signOffPreparedAt && (
+                            <div>
+                              <p className="text-muted-foreground">Prepared by admin</p>
+                              <p className="font-medium">
+                                {appointment.mentorEvaluationData.signOffPreparedBy ?? "Admin"} on{" "}
+                                {formatTimestamp(appointment.mentorEvaluationData.signOffPreparedAt)}
+                              </p>
+                            </div>
+                          )}
+                          {appointment.mentorEvaluationData.finalAcknowledgedAt ? (
+                            <div>
+                              <p className="text-muted-foreground">Final acknowledgment</p>
+                              <p className="font-medium">
+                                {appointment.mentorEvaluationData.finalAcknowledgedBy ?? "Admin"} on{" "}
+                                {formatTimestamp(appointment.mentorEvaluationData.finalAcknowledgedAt)}
+                              </p>
+                            </div>
+                          ) : (
+                            <p className="text-muted-foreground">
+                              Final acknowledgment has not been recorded yet.
+                            </p>
+                          )}
+                        </>
+                      ) : (
+                        <p className="text-muted-foreground">
+                          Final sign-off has not been prepared yet.
                         </p>
                       )}
                     </TimelineItem>

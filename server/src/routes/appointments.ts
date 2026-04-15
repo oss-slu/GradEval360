@@ -1,18 +1,68 @@
 import { Router } from "express";
+import { and, eq, inArray } from "drizzle-orm";
+
 import { db } from "../db/index.js";
 import { appointments, users } from "../db/schema.js";
-import { and, eq, inArray } from "drizzle-orm";
-import { requireAuth } from "../middleware/auth.js"; // adjust path if needed
+import { requireAuth } from "../middleware/auth.js";
+import { generateAppointmentCode } from "../lib/appointment-code.js";
 import {
   APPOINTMENT_STATUS,
+  FinalAcknowledgmentSchema,
+  FinalSignOffPreparationSchema,
   GAAcknowledgeExpectationsSchema,
+  MentorEvaluationSchema,
   MentorExpectationSettingSchema,
   SelfEvaluationSchema,
 } from "../../../shared/schemas/appointment.js";
-import { generateAppointmentCode } from "../lib/appointment-code.js";
 
 const router = Router();
-//removed: requireAuth
+
+type RequestUser = {
+  id: string;
+  role: "GA" | "Mentor" | "Admin";
+  unitId?: string | null;
+  unitIds?: string[];
+  name?: string | null;
+  fullName?: string | null;
+};
+
+type AppointmentExpectationDraft = {
+  goals?: string[];
+  weeklyHours?: number;
+  responsibilities?: string;
+  jobCategory?: string;
+  expectedOutputs?: string;
+  expectationsMeetingDate?: string;
+  mentorNotes?: string;
+  mentorAcknowledged?: boolean;
+  mentorAcknowledgedAt?: string;
+  gaAcknowledged?: boolean;
+  gaAcknowledgedAt?: string;
+};
+
+type AppointmentExpectationData = AppointmentExpectationDraft & {
+  goals: string[];
+};
+
+type AppointmentMentorEvaluationData = {
+  ratings?: Record<string, number>;
+  narrative?: string;
+  overallSummary?: string;
+  finalMeetingDate?: string;
+  evaluationSubmittedAt?: string;
+  evaluationSubmittedBy?: string;
+  signOffDecision?: string;
+  signOffNotes?: string;
+  signOffPreparedAt?: string;
+  signOffPreparedBy?: string;
+  finalAcknowledged?: boolean;
+  finalAcknowledgedAt?: string;
+  finalAcknowledgedBy?: string;
+};
+
+function getActorName(user: RequestUser) {
+  return user.fullName ?? user.name ?? user.id;
+}
 
 async function ensureAppointmentCodes(records: any[]) {
   const updates: Array<{ id: string; code: string }> = [];
@@ -59,138 +109,124 @@ async function enrichAppointments(records: any[]) {
   }));
 }
 
-router.post("/:id/self-eval", requireAuth, async (req: any, res) => {
+async function listAppointmentsForUser(user: RequestUser) {
+  if (user.role === "GA") {
+    return db.select().from(appointments).where(eq(appointments.gaId, user.id));
+  }
+
+  if (user.role === "Mentor") {
+    return db.select().from(appointments).where(eq(appointments.mentorId, user.id));
+  }
+
+  if (user.role === "Admin") {
+    if (Array.isArray(user.unitIds) && user.unitIds.length > 0) {
+      return db.select().from(appointments).where(inArray(appointments.unitId, user.unitIds));
+    }
+
+    if (user.unitId) {
+      return db.select().from(appointments).where(eq(appointments.unitId, user.unitId));
+    }
+
+    return db.select().from(appointments);
+  }
+
+  return [];
+}
+
+function canAccessAppointment(user: RequestUser, appointment: any) {
+  if (user.role === "GA") {
+    return appointment.gaId === user.id;
+  }
+
+  if (user.role === "Mentor") {
+    return appointment.mentorId === user.id;
+  }
+
+  if (user.role === "Admin") {
+    const allowedUnits = Array.isArray(user.unitIds) ? user.unitIds : [];
+    if (allowedUnits.length > 0) {
+      return allowedUnits.includes(appointment.unitId);
+    }
+
+    if (user.unitId) {
+      return appointment.unitId === user.unitId;
+    }
+
+    return true;
+  }
+
+  return false;
+}
+
+router.get("/summary", requireAuth, async (req: any, res) => {
   try {
-    const user = req.user;
-    const { id } = req.params;
+    const user = req.user as RequestUser;
+    const result = await listAppointmentsForUser(user);
+    const withCodes = await ensureAppointmentCodes(result ?? []);
 
-    if (user.role !== "GA") {
-      return res.status(403).json({ error: "Only Graduate Assistants can submit self-evaluations" });
+    const statusCounts = Object.values(APPOINTMENT_STATUS).reduce<Record<string, number>>(
+      (accumulator, status) => {
+        accumulator[status] = 0;
+        return accumulator;
+      },
+      {}
+    );
+
+    for (const appointment of withCodes) {
+      statusCounts[appointment.status] = (statusCounts[appointment.status] ?? 0) + 1;
     }
 
-    const parsed = SelfEvaluationSchema.safeParse(req.body);
+    const totalAppointments = withCodes.length;
+    const completedAppointments = withCodes.filter(
+      (appointment) => appointment.status === APPOINTMENT_STATUS.FINAL
+    ).length;
+    const inProgressAppointments = withCodes.filter(
+      (appointment) => appointment.status !== APPOINTMENT_STATUS.FINAL
+    ).length;
 
-    if (!parsed.success) {
-      return res.status(400).json({ error: parsed.error.issues });
-    }
+    const pendingItems = withCodes
+      .filter((appointment) => appointment.status !== APPOINTMENT_STATUS.FINAL)
+      .map((appointment) => ({
+        id: appointment.id,
+        appointmentCode: appointment.appointmentCode,
+        status: appointment.status,
+        gaId: appointment.gaId,
+        mentorId: appointment.mentorId,
+        unitId: appointment.unitId,
+      }));
 
-    const [appointment] = await db
-      .select({ status: appointments.status, gaId: appointments.gaId })
-      .from(appointments)
-      .where(eq(appointments.id, id));
-
-    if (!appointment) {
-      return res.status(404).json({ error: "Appointment not found" });
-    }
-
-    if (appointment.gaId !== user.id) {
-      return res.status(403).json({ error: "You do not have access to this appointment" });
-    }
-
-    if (appointment.status !== APPOINTMENT_STATUS.AWAITING_SELF_EVAL) {
-      return res.status(400).json({
-        error: `Appointment must be in ${APPOINTMENT_STATUS.AWAITING_SELF_EVAL} status to submit self-evaluation`,
-      });
-    }
-
-    await db
-      .update(appointments)
-      .set({
-        selfEvaluationData: parsed.data,
-        status: APPOINTMENT_STATUS.SELF_EVAL_DONE,
-      })
-      .where(eq(appointments.id, id));
-
-    return res.json({ message: "Self-evaluation submitted successfully" });
-
+    return res.json({
+      totalAppointments,
+      completedAppointments,
+      inProgressAppointments,
+      completionPercentage:
+        totalAppointments === 0 ? 0 : Math.round((completedAppointments / totalAppointments) * 100),
+      statusCounts,
+      pendingItems,
+    });
   } catch (error) {
-    console.error("Error submitting self-evaluation:", error);
+    console.error("Error fetching appointment summary:", error);
     return res.status(500).json({ error: "Server error" });
   }
 });
 
-//export default router; 
+router.get("/", requireAuth, async (req: any, res) => {
+  try {
+    const user = req.user as RequestUser;
+    const result = await listAppointmentsForUser(user);
+    const withCodes = await ensureAppointmentCodes(result ?? []);
+    const enriched = await enrichAppointments(withCodes);
 
-type AppointmentExpectationDraft = {
-  goals?: string[];
-  weeklyHours?: number;
-  responsibilities?: string;
-  jobCategory?: string;
-  expectedOutputs?: string;
-  expectationsMeetingDate?: string;
-  mentorNotes?: string;
-  mentorAcknowledged?: boolean;
-  mentorAcknowledgedAt?: string;
-  gaAcknowledged?: boolean;
-  gaAcknowledgedAt?: string;
-};
-
-type AppointmentExpectationData = AppointmentExpectationDraft & {
-  goals: string[];
-};
-
-// Get api/appointments
-//removed: requireAuth,
-router.get("/", requireAuth, async (req: any, res) => {    
-    try {
-        
-        const user = req.user;
-
-        let result; 
-
-        //GA - appointments
-        if (user.role === "GA"){
-            result = await db
-                .select()
-                .from(appointments)
-                .where(eq(appointments.gaId, user.id));
-        }
-
-        //Mentor - Apointments they supervise
-        else if (user.role === "Mentor") {
-            result = await db
-                .select()
-                .from(appointments)
-                .where(eq(appointments.mentorId, user.id));
-        }
-
-        //Admin - appointments 
-        else if (user.role === "Admin") {
-            if (Array.isArray(user.unitIds) && user.unitIds.length > 0) {
-                result = await db
-                    .select()
-                    .from(appointments)
-                    .where(inArray(appointments.unitId, user.unitIds));
-            } else if (user.unitId) {
-                result = await db
-                    .select()
-                    .from(appointments)
-                    .where(eq(appointments.unitId, user.unitId));
-            } else {
-                result = await db
-                    .select()
-                    .from(appointments);
-            }
-        }
-
-        //Those with an UNKNOWN ROLE
-        else {
-            return res.status(403).json({ error: "Forbidden" });
-        }
-
-        const withCodes = await ensureAppointmentCodes(result ?? []);
-        const enriched = await enrichAppointments(withCodes);
-
-        return res.json(enriched);
-    } catch(error) {
-        console.error("Error fetching appointments:", error);
-        return res.status(500).json({ error: "Server error" });
-    } 
+    return res.json(enriched);
+  } catch (error) {
+    console.error("Error fetching appointments:", error);
+    return res.status(500).json({ error: "Server error" });
+  }
 });
 
 router.get("/:id", requireAuth, async (req: any, res) => {
   try {
-    const user = req.user;
+    const user = req.user as RequestUser;
     const appointmentId = req.params.id;
 
     const [appointment] = await db
@@ -202,22 +238,8 @@ router.get("/:id", requireAuth, async (req: any, res) => {
       return res.status(404).json({ error: "Appointment not found" });
     }
 
-    if (user.role === "GA" && appointment.gaId !== user.id) {
+    if (!canAccessAppointment(user, appointment)) {
       return res.status(403).json({ error: "Forbidden" });
-    }
-
-    if (user.role === "Mentor" && appointment.mentorId !== user.id) {
-      return res.status(403).json({ error: "Forbidden" });
-    }
-
-    if (user.role === "Admin") {
-      const allowedUnits = Array.isArray(user.unitIds) ? user.unitIds : [];
-      if (allowedUnits.length > 0 && !allowedUnits.includes(appointment.unitId)) {
-        return res.status(403).json({ error: "Forbidden" });
-      }
-      if (!allowedUnits.length && user.unitId && appointment.unitId !== user.unitId) {
-        return res.status(403).json({ error: "Forbidden" });
-      }
     }
 
     const [withCode] = await ensureAppointmentCodes([appointment]);
@@ -232,7 +254,7 @@ router.get("/:id", requireAuth, async (req: any, res) => {
 
 router.patch("/:id/expectations/setup", requireAuth, async (req: any, res) => {
   try {
-    const user = req.user;
+    const user = req.user as RequestUser;
     const appointmentId = req.params.id;
 
     if (user.role !== "Mentor") {
@@ -291,18 +313,15 @@ router.patch("/:id/expectations/setup", requireAuth, async (req: any, res) => {
   }
 });
 
-// PATCH /api/appointments/:id/expectations
 router.patch("/:id/expectations", requireAuth, async (req: any, res) => {
   try {
-    const user = req.user;
+    const user = req.user as RequestUser;
     const appointmentId = req.params.id;
 
-    // Only GAs should be able to acknowledge expectations
     if (user.role !== "GA") {
       return res.status(403).json({ error: "Only Graduate Assistants can acknowledge expectations" });
     }
 
-    // Validate payload strictly: only { goals: string[] }
     const parsed = GAAcknowledgeExpectationsSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({
@@ -313,7 +332,6 @@ router.patch("/:id/expectations", requireAuth, async (req: any, res) => {
 
     const { goals } = parsed.data;
 
-    // Make sure the appointment exists and belongs to this GA
     const [appointment] = await db
       .select()
       .from(appointments)
@@ -323,7 +341,6 @@ router.patch("/:id/expectations", requireAuth, async (req: any, res) => {
       return res.status(404).json({ error: "Appointment not found" });
     }
 
-    // Must be in ExpectationSet status
     if (appointment.status !== APPOINTMENT_STATUS.SET) {
       return res.status(400).json({
         error: `Appointment must be in ${APPOINTMENT_STATUS.SET} status to acknowledge expectations`,
@@ -341,7 +358,7 @@ router.patch("/:id/expectations", requireAuth, async (req: any, res) => {
 
     const updatedExpectationData: AppointmentExpectationData = {
       ...existingExpectationData,
-      goals: [...existingGoals, ...goals], // append, do not overwrite mentor goals
+      goals: [...existingGoals, ...goals],
       gaAcknowledged: true,
       gaAcknowledgedAt: new Date().toISOString(),
     };
@@ -358,6 +375,210 @@ router.patch("/:id/expectations", requireAuth, async (req: any, res) => {
     return res.json(updatedAppointment);
   } catch (error) {
     console.error("Error acknowledging expectations:", error);
+    return res.status(500).json({ error: "Server error" });
+  }
+});
+
+router.post("/:id/self-eval", requireAuth, async (req: any, res) => {
+  try {
+    const user = req.user as RequestUser;
+    const { id } = req.params;
+
+    if (user.role !== "GA") {
+      return res.status(403).json({ error: "Only Graduate Assistants can submit self-evaluations" });
+    }
+
+    const parsed = SelfEvaluationSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.flatten() });
+    }
+
+    const [appointment] = await db
+      .select({ status: appointments.status, gaId: appointments.gaId })
+      .from(appointments)
+      .where(eq(appointments.id, id));
+
+    if (!appointment) {
+      return res.status(404).json({ error: "Appointment not found" });
+    }
+
+    if (appointment.gaId !== user.id) {
+      return res.status(403).json({ error: "You do not have access to this appointment" });
+    }
+
+    if (appointment.status !== APPOINTMENT_STATUS.AWAITING_SELF_EVAL) {
+      return res.status(400).json({
+        error: `Appointment must be in ${APPOINTMENT_STATUS.AWAITING_SELF_EVAL} status to submit self-evaluation`,
+      });
+    }
+
+    await db
+      .update(appointments)
+      .set({
+        selfEvaluationData: parsed.data,
+        status: APPOINTMENT_STATUS.SELF_EVAL_DONE,
+      })
+      .where(eq(appointments.id, id));
+
+    return res.json({ message: "Self-evaluation submitted successfully" });
+  } catch (error) {
+    console.error("Error submitting self-evaluation:", error);
+    return res.status(500).json({ error: "Server error" });
+  }
+});
+
+router.post("/:id/mentor-evaluation", requireAuth, async (req: any, res) => {
+  try {
+    const user = req.user as RequestUser;
+    const appointmentId = req.params.id;
+
+    if (user.role !== "Mentor") {
+      return res.status(403).json({ error: "Only mentors can submit mentor evaluations" });
+    }
+
+    const parsed = MentorEvaluationSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: "Invalid request payload",
+        details: parsed.error.flatten(),
+      });
+    }
+
+    const [appointment] = await db
+      .select()
+      .from(appointments)
+      .where(and(eq(appointments.id, appointmentId), eq(appointments.mentorId, user.id)));
+
+    if (!appointment) {
+      return res.status(404).json({ error: "Appointment not found" });
+    }
+
+    if (
+      appointment.status !== APPOINTMENT_STATUS.SELF_EVAL_DONE &&
+      appointment.status !== APPOINTMENT_STATUS.AWAITING_MENTOR_EVAL
+    ) {
+      return res.status(400).json({
+        error: `Appointment must be in ${APPOINTMENT_STATUS.SELF_EVAL_DONE} or ${APPOINTMENT_STATUS.AWAITING_MENTOR_EVAL} to submit mentor evaluation`,
+      });
+    }
+
+    const existingMentorEvaluationData: AppointmentMentorEvaluationData =
+      appointment.mentorEvaluationData && typeof appointment.mentorEvaluationData === "object"
+        ? (appointment.mentorEvaluationData as AppointmentMentorEvaluationData)
+        : {};
+
+    const updatedMentorEvaluationData: AppointmentMentorEvaluationData = {
+      ...existingMentorEvaluationData,
+      ...parsed.data,
+      evaluationSubmittedAt: new Date().toISOString(),
+      evaluationSubmittedBy: getActorName(user),
+    };
+
+    const [updatedAppointment] = await db
+      .update(appointments)
+      .set({
+        mentorEvaluationData: updatedMentorEvaluationData,
+        status: APPOINTMENT_STATUS.MENTOR_EVAL_DONE,
+      })
+      .where(eq(appointments.id, appointmentId))
+      .returning();
+
+    return res.json(updatedAppointment);
+  } catch (error) {
+    console.error("Error submitting mentor evaluation:", error);
+    return res.status(500).json({ error: "Server error" });
+  }
+});
+
+router.post("/:id/final-signoff", requireAuth, async (req: any, res) => {
+  try {
+    const user = req.user as RequestUser;
+    const appointmentId = req.params.id;
+
+    if (user.role !== "Admin") {
+      return res.status(403).json({ error: "Only admins can complete final sign-off" });
+    }
+
+    const [appointment] = await db
+      .select()
+      .from(appointments)
+      .where(eq(appointments.id, appointmentId));
+
+    if (!appointment) {
+      return res.status(404).json({ error: "Appointment not found" });
+    }
+
+    if (!canAccessAppointment(user, appointment)) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const existingMentorEvaluationData: AppointmentMentorEvaluationData =
+      appointment.mentorEvaluationData && typeof appointment.mentorEvaluationData === "object"
+        ? (appointment.mentorEvaluationData as AppointmentMentorEvaluationData)
+        : {};
+
+    if (appointment.status === APPOINTMENT_STATUS.MENTOR_EVAL_DONE) {
+      const parsed = FinalSignOffPreparationSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({
+          error: "Invalid request payload",
+          details: parsed.error.flatten(),
+        });
+      }
+
+      const updatedMentorEvaluationData: AppointmentMentorEvaluationData = {
+        ...existingMentorEvaluationData,
+        signOffDecision: parsed.data.signOffDecision,
+        signOffNotes: parsed.data.signOffNotes,
+        signOffPreparedAt: new Date().toISOString(),
+        signOffPreparedBy: getActorName(user),
+      };
+
+      const [updatedAppointment] = await db
+        .update(appointments)
+        .set({
+          mentorEvaluationData: updatedMentorEvaluationData,
+          status: APPOINTMENT_STATUS.AWAITING_SIGN_OFF,
+        })
+        .where(eq(appointments.id, appointmentId))
+        .returning();
+
+      return res.json(updatedAppointment);
+    }
+
+    if (appointment.status === APPOINTMENT_STATUS.AWAITING_SIGN_OFF) {
+      const parsed = FinalAcknowledgmentSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({
+          error: "Invalid request payload",
+          details: parsed.error.flatten(),
+        });
+      }
+
+      const updatedMentorEvaluationData: AppointmentMentorEvaluationData = {
+        ...existingMentorEvaluationData,
+        finalAcknowledged: parsed.data.finalAcknowledged,
+        finalAcknowledgedAt: new Date().toISOString(),
+        finalAcknowledgedBy: getActorName(user),
+      };
+
+      const [updatedAppointment] = await db
+        .update(appointments)
+        .set({
+          mentorEvaluationData: updatedMentorEvaluationData,
+          status: APPOINTMENT_STATUS.FINAL,
+        })
+        .where(eq(appointments.id, appointmentId))
+        .returning();
+
+      return res.json(updatedAppointment);
+    }
+
+    return res.status(400).json({
+      error: `Appointment must be in ${APPOINTMENT_STATUS.MENTOR_EVAL_DONE} or ${APPOINTMENT_STATUS.AWAITING_SIGN_OFF} to complete final sign-off`,
+    });
+  } catch (error) {
+    console.error("Error submitting final sign-off:", error);
     return res.status(500).json({ error: "Server error" });
   }
 });
