@@ -35,8 +35,15 @@ interface MentorEvaluation {
   narrative?: string;
   overallSummary?: string;
   finalMeetingDate?: string;
-  gaSignOff?: boolean;
-  gaSignOffAt?: string;
+  evaluationSubmittedAt?: string;
+  evaluationSubmittedBy?: string;
+  signOffDecision?: string;
+  signOffNotes?: string;
+  signOffPreparedAt?: string;
+  signOffPreparedBy?: string;
+  finalAcknowledged?: boolean;
+  finalAcknowledgedAt?: string;
+  finalAcknowledgedBy?: string;
 }
 
 // Pass the Zod options to Postgres Enum

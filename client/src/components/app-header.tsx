@@ -13,8 +13,8 @@ export function AppHeader() {
   async function handleLogout() {
     try {
       const signOutPromise = authClient.signOut();
-      if (signOutPromise && typeof (signOutPromise as Promise<void>).catch === "function") {
-        void (signOutPromise as Promise<void>).catch(() => {});
+      if (signOutPromise && typeof signOutPromise.catch === "function") {
+        void signOutPromise.catch(() => {});
       }
     } catch {
       // ignore and fall back to direct sign-out call below

@@ -77,14 +77,33 @@ export const SelfEvaluationSchema = z.object({
 */
 
 export const MentorEvaluationSchema = z.object({
-  appointmentId: z.string().uuid(),
-  ratings: z.record(z.string(), z.number()).optional(),
-  narrative: z.string().optional(),
-  overallSummary: z.string().optional(),
-  finalMeetingDate: z.string().optional(),
-  gaSignOff: z.boolean().optional(),
-  gaSignOffAt: z.string().optional(),
-});
+  ratings: z
+    .object({
+      communication: z.number().min(1).max(5),
+      dependability: z.number().min(1).max(5),
+      initiative: z.number().min(1).max(5),
+      qualityOfWork: z.number().min(1).max(5),
+    })
+    .strict(),
+  narrative: z.string().trim().min(10, "Narrative must be at least 10 characters"),
+  overallSummary: z.string().trim().min(10, "Overall summary must be at least 10 characters"),
+  finalMeetingDate: z.string().trim().min(4, "Final meeting date is required"),
+}).strict();
+
+export const FinalSignOffPreparationSchema = z
+  .object({
+    signOffDecision: z.string().trim().min(3, "Sign-off decision is required"),
+    signOffNotes: z.string().trim().min(10, "Sign-off notes must be at least 10 characters"),
+  })
+  .strict();
+
+export const FinalAcknowledgmentSchema = z
+  .object({
+    finalAcknowledged: z
+      .boolean()
+      .refine((value) => value === true, "Final acknowledgment is required"),
+  })
+  .strict();
 
 export const AppointmentSchema = z.object({
 
@@ -103,3 +122,6 @@ export const AppointmentSchema = z.object({
 });
 
 export type Appointment = z.infer<typeof AppointmentSchema>;
+export type MentorEvaluationInput = z.infer<typeof MentorEvaluationSchema>;
+export type FinalSignOffPreparationInput = z.infer<typeof FinalSignOffPreparationSchema>;
+export type FinalAcknowledgmentInput = z.infer<typeof FinalAcknowledgmentSchema>;

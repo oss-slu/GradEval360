@@ -3,7 +3,7 @@
 Welcome to the **GradEval360** development team! This project is the centralized performance management platform for Saint Louis University's Graduate Assistants.
 
 ## Project Focus: Spring 2026
-Our goal for this semester is to complete the **Expectation Setting** workflow. This is the first and most critical step in the GA lifecycle, where GAs and Mentors agree on goals and responsibilities.
+Our current milestone work completes the full **Milestone 2 annual evaluation workflow**. That includes expectation setting, GA acknowledgment, GA self-evaluation, mentor evaluation, admin sign-off, status reporting, and dashboard visibility through `FinalEvaluated`.
 
 ---
 
@@ -113,7 +113,7 @@ Run these from the repository root unless noted otherwise:
 - Start backend: `cd server && npm run dev`
 - Start frontend: `cd client && npm run dev`
 - Initialize DB (schema + seed): `cd server && npm run db:setup`
-- Push DB schema changes: `cd GradEval360/server && npm run db:push`
+- Push DB schema changes: `cd server && npm run db:push`
 - Auth smoke test: `cd server && npm run smoke:auth`
 
 ---
@@ -135,6 +135,13 @@ Helpful references in `docs/`:
 - Okta setup + smoke test: `docs/OKTA_SETUP_AND_SMOKE_TEST.md`
 - Auth tables and flow: `docs/AUTH_TABLES_AND_FLOW.md`
 - Appointment status enum: `docs/status-enum.md`
+
+## Workflow Summary
+The annual evaluation lifecycle now progresses through these statuses:
+
+`AwaitingExpectationSetting -> ExpectationSet -> AwaitingSelfEvaluation -> SelfEvaluationCompleted -> MentorEvaluationCompleted -> AwaitingSignOff -> FinalEvaluated`
+
+Some records may also appear in `AwaitingMentorEvaluation` when they are intentionally parked for mentor follow-up. The appointment details page is the main action surface for each remaining step after creation.
 
 ---
 

@@ -124,7 +124,10 @@ async function seed() {
           narrative: "Completed all lab duties with high precision.",
           overallSummary: "Strong performance and reliable delivery.",
           finalMeetingDate: "2026-04-01",
-          gaSignOff: false
+          signOffDecision: "Approved pending final acknowledgment",
+          signOffNotes: "Evaluation reviewed by admin and ready for final acknowledgment.",
+          signOffPreparedAt: "2026-04-02T09:00:00.000Z",
+          signOffPreparedBy: "Prem Kiran"
         }
       },
       {
@@ -162,7 +165,8 @@ async function seed() {
           narrative: "Consistent grading with minor delays early on.",
           overallSummary: "Solid support and dependable turnaround.",
           finalMeetingDate: "2026-03-28",
-          gaSignOff: false
+          evaluationSubmittedAt: "2026-03-28T15:30:00.000Z",
+          evaluationSubmittedBy: "Mentor B"
         }
       }
     ];

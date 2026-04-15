@@ -29,6 +29,56 @@ type Appointment = {
   unitId?: string;
 };
 
+const STATUS_METADATA: Record<
+  string,
+  {
+    label: string;
+    primaryActor: string;
+    requiredAction: string;
+  }
+> = {
+  AwaitingExpectationSetting: {
+    label: "Awaiting Expectation Setting",
+    primaryActor: "Mentor",
+    requiredAction: "Confirm duties, expectations, goals, hours, and acknowledge the plan.",
+  },
+  ExpectationSet: {
+    label: "Expectation Set",
+    primaryActor: "GA",
+    requiredAction: "Review mentor expectations and add 1 to 3 personal goals.",
+  },
+  AwaitingSelfEvaluation: {
+    label: "Awaiting Self-Evaluation",
+    primaryActor: "GA",
+    requiredAction: "Submit self-evaluation with progress, strengths, and challenges.",
+  },
+  SelfEvaluationCompleted: {
+    label: "Self-Evaluation Completed",
+    primaryActor: "Mentor",
+    requiredAction: "Review the GA reflection and submit mentor evaluation.",
+  },
+  AwaitingMentorEvaluation: {
+    label: "Awaiting Mentor Evaluation",
+    primaryActor: "Mentor",
+    requiredAction: "Complete mentor evaluation and summary.",
+  },
+  MentorEvaluationCompleted: {
+    label: "Mentor Evaluation Completed",
+    primaryActor: "Admin",
+    requiredAction: "Prepare sign-off notes and move the appointment to awaiting sign-off.",
+  },
+  AwaitingSignOff: {
+    label: "Awaiting Sign-Off",
+    primaryActor: "Admin",
+    requiredAction: "Finalize the annual evaluation acknowledgment.",
+  },
+  FinalEvaluated: {
+    label: "Final Evaluated",
+    primaryActor: "Complete",
+    requiredAction: "Cycle complete. No further action required.",
+  },
+};
+
 function formatDateTime(appointment: Appointment) {
   const rawDateTime =
     appointment.startsAt ??
@@ -89,56 +139,10 @@ function getStatusClasses(status?: string) {
   return "bg-slate-100 text-slate-800 border-slate-200";
 }
 
-const STATUS_FLOW = [
-  {
-    status: "AwaitingExpectationSetting",
-    label: "Awaiting Expectation Setting",
-    primaryActor: "Mentor",
-    requiredAction: "Confirm duties, expectations, goals, hours, and acknowledge the plan.",
-  },
-  {
-    status: "ExpectationSet",
-    label: "Expectation Set",
-    primaryActor: "GA",
-    requiredAction: "Review mentor expectations and add 1–3 personal goals.",
-  },
-  {
-    status: "AwaitingSelfEvaluation",
-    label: "Awaiting Self-Evaluation",
-    primaryActor: "GA",
-    requiredAction: "Submit self-evaluation (progress, strengths, challenges).",
-  },
-  {
-    status: "SelfEvaluationCompleted",
-    label: "Self-Evaluation Completed",
-    primaryActor: "Mentor",
-    requiredAction: "Review GA self-evaluation and begin mentor evaluation.",
-  },
-  {
-    status: "AwaitingMentorEvaluation",
-    label: "Awaiting Mentor Evaluation",
-    primaryActor: "Mentor",
-    requiredAction: "Complete mentor evaluation and summary.",
-  },
-  {
-    status: "MentorEvaluationCompleted",
-    label: "Mentor Evaluation Completed",
-    primaryActor: "Admin",
-    requiredAction: "Review evaluation and prepare for sign-off.",
-  },
-  {
-    status: "AwaitingSignOff",
-    label: "Awaiting Sign-Off",
-    primaryActor: "Admin",
-    requiredAction: "Finalize sign-off for the appointment cycle.",
-  },
-  {
-    status: "FinalEvaluated",
-    label: "Final Evaluated",
-    primaryActor: "System",
-    requiredAction: "Cycle complete. No further action required.",
-  },
-] as const;
+const STATUS_FLOW = Object.entries(STATUS_METADATA).map(([status, metadata]) => ({
+  status,
+  ...metadata,
+}));
 
 function getActionLabelForRole(status: string, role: string | null) {
   if (!role) return null;
@@ -155,11 +159,15 @@ function getActionLabelForRole(status: string, role: string | null) {
   }
 
   if (role === "Admin") {
-    if (status === "MentorEvaluationCompleted") return "Review sign-off";
-    if (status === "AwaitingSignOff") return "Sign off";
+    if (status === "MentorEvaluationCompleted") return "Prepare sign-off";
+    if (status === "AwaitingSignOff") return "Finalize sign-off";
   }
 
   return null;
+}
+
+function getStatusDisplay(status?: string) {
+  return STATUS_METADATA[status || ""]?.label ?? status ?? "Unknown";
 }
 
 export default function AppointmentsPage() {
@@ -354,7 +362,7 @@ export default function AppointmentsPage() {
                           <option value="all">All statuses</option>
                           {statusOptions.map((status) => (
                             <option key={status} value={status}>
-                              {status}
+                              {getStatusDisplay(status)}
                             </option>
                           ))}
                         </select>
@@ -404,6 +412,7 @@ export default function AppointmentsPage() {
                     <div className="space-y-4">
                       {filteredAppointments.map((appointment, index) => {
                         const status = appointment.status || "Unknown";
+                        const statusDisplay = getStatusDisplay(status);
 
                         return (
                           <div
@@ -444,9 +453,19 @@ export default function AppointmentsPage() {
                                   status
                                 )}`}
                               >
-                                {status}
+                                {statusDisplay}
                               </span>
                             </div>
+                            {STATUS_METADATA[status] && (
+                              <div className="mt-3 rounded-lg bg-slate-50 p-3 text-sm">
+                                <p className="font-medium text-slate-900">
+                                  Next owner: {STATUS_METADATA[status].primaryActor}
+                                </p>
+                                <p className="mt-1 text-slate-600">
+                                  {STATUS_METADATA[status].requiredAction}
+                                </p>
+                              </div>
+                            )}
                             {shouldShowAction(status, userRole) &&
                               renderActionButton(status, appointment, index)}
                             <div className="mt-3">
