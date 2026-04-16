@@ -28,6 +28,8 @@ type RequestUser = {
 
 type AppointmentExpectationDraft = {
   goals?: string[];
+  mentorGoals?: string[];
+  gaGoals?: string[];
   weeklyHours?: number;
   responsibilities?: string;
   jobCategory?: string;
@@ -293,6 +295,7 @@ router.patch("/:id/expectations/setup", requireAuth, async (req: any, res) => {
       ...existingExpectationData,
       ...parsed.data,
       goals: parsed.data.goals,
+      mentorGoals: parsed.data.goals,
       mentorAcknowledged: true,
       mentorAcknowledgedAt: new Date().toISOString(),
     };
@@ -355,10 +358,15 @@ router.patch("/:id/expectations", requireAuth, async (req: any, res) => {
     const existingGoals = Array.isArray(existingExpectationData.goals)
       ? existingExpectationData.goals
       : [];
+    const existingMentorGoals = Array.isArray(existingExpectationData.mentorGoals)
+      ? existingExpectationData.mentorGoals
+      : existingGoals;
 
     const updatedExpectationData: AppointmentExpectationData = {
       ...existingExpectationData,
-      goals: [...existingGoals, ...goals],
+      goals: [...existingMentorGoals, ...goals],
+      mentorGoals: existingMentorGoals,
+      gaGoals: goals,
       gaAcknowledged: true,
       gaAcknowledgedAt: new Date().toISOString(),
     };
@@ -453,12 +461,9 @@ router.post("/:id/mentor-evaluation", requireAuth, async (req: any, res) => {
       return res.status(404).json({ error: "Appointment not found" });
     }
 
-    if (
-      appointment.status !== APPOINTMENT_STATUS.SELF_EVAL_DONE &&
-      appointment.status !== APPOINTMENT_STATUS.AWAITING_MENTOR_EVAL
-    ) {
+    if (appointment.status !== APPOINTMENT_STATUS.SELF_EVAL_DONE) {
       return res.status(400).json({
-        error: `Appointment must be in ${APPOINTMENT_STATUS.SELF_EVAL_DONE} or ${APPOINTMENT_STATUS.AWAITING_MENTOR_EVAL} to submit mentor evaluation`,
+        error: `Appointment must be in ${APPOINTMENT_STATUS.SELF_EVAL_DONE} to submit mentor evaluation`,
       });
     }
 

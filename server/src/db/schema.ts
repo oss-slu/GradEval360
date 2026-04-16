@@ -8,7 +8,6 @@ export const statusEnum = pgEnum('status', [
   'ExpectationSet', 
   'AwaitingSelfEvaluation',
   'SelfEvaluationCompleted',
-  'AwaitingMentorEvaluation',
   'MentorEvaluationCompleted',
   'AwaitingSignOff',
   'FinalEvaluated'
@@ -16,9 +15,16 @@ export const statusEnum = pgEnum('status', [
 
 interface Expectation {
   goals: string[];
+  mentorGoals?: string[];
+  gaGoals?: string[];
   weeklyHours?: number;
+  jobCategory?: string;
+  expectedOutputs?: string;
+  expectationsMeetingDate?: string;
   responsibilities?: string;
   mentorNotes?: string;
+  mentorAcknowledged?: boolean;
+  mentorAcknowledgedAt?: string;
   gaAcknowledged?: boolean;
   gaAcknowledgedAt?: string;
 }
