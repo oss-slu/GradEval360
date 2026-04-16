@@ -27,6 +27,12 @@ type Appointment = {
   gaName?: string;
   adminName?: string;
   unitId?: string;
+  expectationData?: {
+    expectationsMeetingDate?: string;
+  };
+  mentorEvaluationData?: {
+    finalMeetingDate?: string;
+  };
 };
 
 const STATUS_METADATA: Record<
@@ -57,11 +63,6 @@ const STATUS_METADATA: Record<
     primaryActor: "Mentor",
     requiredAction: "Review the GA reflection and submit mentor evaluation.",
   },
-  AwaitingMentorEvaluation: {
-    label: "Awaiting Mentor Evaluation",
-    primaryActor: "Mentor",
-    requiredAction: "Complete mentor evaluation and summary.",
-  },
   MentorEvaluationCompleted: {
     label: "Mentor Evaluation Completed",
     primaryActor: "Admin",
@@ -79,7 +80,36 @@ const STATUS_METADATA: Record<
   },
 };
 
-function formatDateTime(appointment: Appointment) {
+function formatDisplayDate(value?: string) {
+  if (!value) return null;
+
+  const parsed = new Date(value);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+
+  const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(value);
+  return isDateOnly ? parsed.toLocaleDateString() : parsed.toLocaleString();
+}
+
+function getAppointmentDateInfo(appointment: Appointment) {
+  const finalMeetingDate = appointment.mentorEvaluationData?.finalMeetingDate;
+  if (finalMeetingDate) {
+    return {
+      label: "Final meeting date",
+      value: formatDisplayDate(finalMeetingDate) ?? finalMeetingDate,
+    };
+  }
+
+  const expectationsMeetingDate = appointment.expectationData?.expectationsMeetingDate;
+  if (expectationsMeetingDate) {
+    return {
+      label: "Expectations meeting date",
+      value: formatDisplayDate(expectationsMeetingDate) ?? expectationsMeetingDate,
+    };
+  }
+
   const rawDateTime =
     appointment.startsAt ??
     appointment.startTime ??
@@ -90,19 +120,16 @@ function formatDateTime(appointment: Appointment) {
     appointment.date;
 
   if (!rawDateTime) {
-    return appointment.time ? `Time: ${appointment.time}` : "Date not available";
+    return appointment.time
+      ? { label: "Scheduled", value: `Time: ${appointment.time}` }
+      : { label: "Meeting date", value: "Date not recorded yet" };
   }
 
-  const parsed = new Date(rawDateTime);
-
-  if (Number.isNaN(parsed.getTime())) {
-    if (appointment.time) {
-      return `${rawDateTime} at ${appointment.time}`;
-    }
-    return rawDateTime;
-  }
-
-  return parsed.toLocaleString();
+  const formatted = formatDisplayDate(rawDateTime) ?? rawDateTime;
+  return {
+    label: "Scheduled",
+    value: appointment.time ? `${formatted} at ${appointment.time}` : formatted,
+  };
 }
 
 function getAppointmentTitle(appointment: Appointment, index: number) {
@@ -154,8 +181,7 @@ function getActionLabelForRole(status: string, role: string | null) {
 
   if (role === "Mentor") {
     if (status === "AwaitingExpectationSetting") return "Set expectations";
-    if (status === "SelfEvaluationCompleted") return "Start mentor evaluation";
-    if (status === "AwaitingMentorEvaluation") return "Complete mentor evaluation";
+    if (status === "SelfEvaluationCompleted") return "Complete mentor evaluation";
   }
 
   if (role === "Admin") {
@@ -413,6 +439,7 @@ export default function AppointmentsPage() {
                       {filteredAppointments.map((appointment, index) => {
                         const status = appointment.status || "Unknown";
                         const statusDisplay = getStatusDisplay(status);
+                        const dateInfo = getAppointmentDateInfo(appointment);
 
                         return (
                           <div
@@ -428,7 +455,7 @@ export default function AppointmentsPage() {
                                   Appointment {appointment.appointmentCode ?? `GA-${index + 1}`}
                                 </p>
                                 <p className="text-sm text-muted-foreground">
-                                  {formatDateTime(appointment)}
+                                  {dateInfo.label}: {dateInfo.value}
                                 </p>
 
                                 {(appointment.mentorName ||

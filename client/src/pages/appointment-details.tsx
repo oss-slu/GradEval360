@@ -31,6 +31,8 @@ type AppointmentDetails = {
   mentorName?: string;
   expectationData?: {
     goals?: string[];
+    mentorGoals?: string[];
+    gaGoals?: string[];
     weeklyHours?: number;
     responsibilities?: string;
     jobCategory?: string;
@@ -91,12 +93,7 @@ const STATUS_COPY: Record<
   SelfEvaluationCompleted: {
     label: "Self-evaluation completed",
     owner: "Mentor",
-    helper: "Mentor evaluation is ready to be submitted.",
-  },
-  AwaitingMentorEvaluation: {
-    label: "Awaiting mentor evaluation",
-    owner: "Mentor",
-    helper: "Mentor evaluation is still pending.",
+    helper: "Mentor should review the GA reflection and submit the mentor evaluation next.",
   },
   MentorEvaluationCompleted: {
     label: "Mentor evaluation completed",
@@ -123,6 +120,22 @@ const ratingLabels: Record<string, string> = {
 };
 
 function formatDateTime(appointment: AppointmentDetails) {
+  const finalMeetingDate = appointment.mentorEvaluationData?.finalMeetingDate;
+  if (finalMeetingDate) {
+    return {
+      label: "Final meeting date",
+      value: formatTimestamp(finalMeetingDate) ?? finalMeetingDate,
+    };
+  }
+
+  const expectationsMeetingDate = appointment.expectationData?.expectationsMeetingDate;
+  if (expectationsMeetingDate) {
+    return {
+      label: "Expectations meeting date",
+      value: formatTimestamp(expectationsMeetingDate) ?? expectationsMeetingDate,
+    };
+  }
+
   const rawDateTime =
     appointment.startsAt ??
     appointment.startTime ??
@@ -133,19 +146,24 @@ function formatDateTime(appointment: AppointmentDetails) {
     appointment.date;
 
   if (!rawDateTime) {
-    return appointment.time ? `Time: ${appointment.time}` : "Date not available";
+    return appointment.time
+      ? { label: "Scheduled", value: `Time: ${appointment.time}` }
+      : { label: "Meeting date", value: "Date not recorded yet" };
   }
 
   const parsed = new Date(rawDateTime);
 
   if (Number.isNaN(parsed.getTime())) {
-    if (appointment.time) {
-      return `${rawDateTime} at ${appointment.time}`;
-    }
-    return rawDateTime;
+    return {
+      label: "Scheduled",
+      value: appointment.time ? `${rawDateTime} at ${appointment.time}` : rawDateTime,
+    };
   }
 
-  return parsed.toLocaleString();
+  return {
+    label: "Scheduled",
+    value: appointment.time ? `${parsed.toLocaleString()} at ${appointment.time}` : parsed.toLocaleString(),
+  };
 }
 
 function formatTimestamp(value?: string) {
@@ -236,6 +254,31 @@ export default function AppointmentDetailsPage() {
   }, [id]);
 
   const expectationGoals = useMemo(() => appointment?.expectationData?.goals ?? [], [appointment]);
+  const mentorGoals = useMemo(() => {
+    const explicitMentorGoals = appointment?.expectationData?.mentorGoals;
+    if (Array.isArray(explicitMentorGoals) && explicitMentorGoals.length > 0) {
+      return explicitMentorGoals;
+    }
+
+    if (!appointment?.expectationData?.gaAcknowledged) {
+      return expectationGoals;
+    }
+
+    return [];
+  }, [appointment, expectationGoals]);
+  const gaGoals = useMemo(() => {
+    const explicitGaGoals = appointment?.expectationData?.gaGoals;
+    if (Array.isArray(explicitGaGoals) && explicitGaGoals.length > 0) {
+      return explicitGaGoals;
+    }
+
+    return [];
+  }, [appointment]);
+  const hasLegacyCombinedGoals =
+    expectationGoals.length > 0 &&
+    appointment?.expectationData?.gaAcknowledged &&
+    mentorGoals.length === 0 &&
+    gaGoals.length === 0;
 
   const userRoleRaw =
     (session?.user as any)?.role ??
@@ -244,15 +287,14 @@ export default function AppointmentDetailsPage() {
 
   const userRole = userRoleRaw ? String(userRoleRaw) : null;
   const statusInfo = appointment?.status ? STATUS_COPY[appointment.status] : null;
+  const dateInfo = appointment ? formatDateTime(appointment) : null;
 
   const canSetExpectations =
     userRole === "Mentor" && appointment?.status === "AwaitingExpectationSetting";
   const canAcknowledgeExpectations = userRole === "GA" && appointment?.status === "ExpectationSet";
   const canSubmitSelfEval = userRole === "GA" && appointment?.status === "AwaitingSelfEvaluation";
   const canSubmitMentorEval =
-    userRole === "Mentor" &&
-    (appointment?.status === "SelfEvaluationCompleted" ||
-      appointment?.status === "AwaitingMentorEvaluation");
+    userRole === "Mentor" && appointment?.status === "SelfEvaluationCompleted";
   const canCompleteSignOff =
     userRole === "Admin" &&
     (appointment?.status === "MentorEvaluationCompleted" ||
@@ -308,8 +350,8 @@ export default function AppointmentDetailsPage() {
                       <h2 className="text-lg font-semibold">Overview</h2>
                       <dl className="mt-4 grid gap-4 text-sm sm:grid-cols-2">
                         <div>
-                          <dt className="text-muted-foreground">Scheduled</dt>
-                          <dd className="font-medium">{formatDateTime(appointment)}</dd>
+                          <dt className="text-muted-foreground">{dateInfo?.label ?? "Meeting date"}</dt>
+                          <dd className="font-medium">{dateInfo?.value ?? "Date not recorded yet"}</dd>
                         </div>
                         <div>
                           <dt className="text-muted-foreground">Unit</dt>
@@ -421,15 +463,43 @@ export default function AppointmentDetailsPage() {
                           </div>
                         )}
                       </div>
-                      {expectationGoals.length > 0 ? (
-                        <ul className="list-disc space-y-1 pl-5">
-                          {expectationGoals.map((goal) => (
-                            <li key={goal}>{goal}</li>
-                          ))}
-                        </ul>
-                      ) : (
+                      {mentorGoals.length > 0 ? (
+                        <div>
+                          <p className="text-muted-foreground">Mentor-defined goals</p>
+                          <ul className="mt-2 list-disc space-y-1 pl-5">
+                            {mentorGoals.map((goal) => (
+                              <li key={`mentor-${goal}`}>{goal}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : null}
+                      {gaGoals.length > 0 ? (
+                        <div>
+                          <p className="text-muted-foreground">GA goals</p>
+                          <ul className="mt-2 list-disc space-y-1 pl-5">
+                            {gaGoals.map((goal) => (
+                              <li key={`ga-${goal}`}>{goal}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : null}
+                      {hasLegacyCombinedGoals ? (
+                        <div>
+                          <p className="text-muted-foreground">Combined goals</p>
+                          <ul className="mt-2 list-disc space-y-1 pl-5">
+                            {expectationGoals.map((goal) => (
+                              <li key={`combined-${goal}`}>{goal}</li>
+                            ))}
+                          </ul>
+                          <p className="mt-2 text-xs text-muted-foreground">
+                            This older record stores mentor and GA goals together, so they cannot be
+                            separated automatically.
+                          </p>
+                        </div>
+                      ) : null}
+                      {expectationGoals.length === 0 ? (
                         <p className="text-muted-foreground">No goals recorded yet.</p>
-                      )}
+                      ) : null}
                       {appointment.expectationData?.responsibilities && (
                         <div>
                           <p className="text-muted-foreground">Responsibilities</p>

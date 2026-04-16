@@ -141,7 +141,6 @@ The annual evaluation lifecycle now progresses through these statuses:
 
 `AwaitingExpectationSetting -> ExpectationSet -> AwaitingSelfEvaluation -> SelfEvaluationCompleted -> MentorEvaluationCompleted -> AwaitingSignOff -> FinalEvaluated`
 
-Some records may also appear in `AwaitingMentorEvaluation` when they are intentionally parked for mentor follow-up. The appointment details page is the main action surface for each remaining step after creation.
 
 ---
 

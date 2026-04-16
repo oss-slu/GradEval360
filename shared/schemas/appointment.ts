@@ -53,7 +53,6 @@ export const APPOINTMENT_STATUS = {
   SET: 'ExpectationSet',
   AWAITING_SELF_EVAL: 'AwaitingSelfEvaluation',
   SELF_EVAL_DONE: 'SelfEvaluationCompleted',
-  AWAITING_MENTOR_EVAL: 'AwaitingMentorEvaluation',
   MENTOR_EVAL_DONE: 'MentorEvaluationCompleted',
   AWAITING_SIGN_OFF: 'AwaitingSignOff',
   FINAL: 'FinalEvaluated',

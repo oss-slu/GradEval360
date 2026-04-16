@@ -27,7 +27,6 @@ const STATUS_LABELS: Record<string, string> = {
   ExpectationSet: "Expectation Set",
   AwaitingSelfEvaluation: "Awaiting Self-Evaluation",
   SelfEvaluationCompleted: "Self-Evaluation Completed",
-  AwaitingMentorEvaluation: "Awaiting Mentor Evaluation",
   MentorEvaluationCompleted: "Mentor Evaluation Completed",
   AwaitingSignOff: "Awaiting Sign-Off",
   FinalEvaluated: "Final Evaluated",

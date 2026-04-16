@@ -16,6 +16,7 @@ The appointment details page is the primary action surface for every actor after
    Action to advance: Mentor submits expectations and acknowledges the work plan.
    Required data:
    - `expectationData.goals`
+   - `expectationData.mentorGoals`
    - `expectationData.responsibilities`
    - `expectationData.weeklyHours`
    - `expectationData.jobCategory`
@@ -30,6 +31,7 @@ The appointment details page is the primary action surface for every actor after
    Primary actor: GA
    Action to advance: GA reviews the plan and adds 1 to 3 personal goals.
    Required data:
+   - `expectationData.gaGoals`
    - `expectationData.gaAcknowledged = true`
    - `expectationData.gaAcknowledgedAt`
    Next status: `AwaitingSelfEvaluation`
@@ -48,13 +50,6 @@ The appointment details page is the primary action surface for every actor after
 4. **SelfEvaluationCompleted**
    Displayed when: GA self-evaluation is complete and mentor evaluation can begin.
    Primary actor: Mentor
-   Action to advance: Mentor completes evaluation.
-   Required data to move forward: none yet, but mentor evaluation is now enabled.
-   Next status: `MentorEvaluationCompleted`
-
-5. **AwaitingMentorEvaluation**
-   Displayed when: A record is explicitly parked for mentor completion.
-   Primary actor: Mentor
    Action to advance: Mentor completes evaluation from the appointment details page.
    Required data:
    - `mentorEvaluationData.ratings`
@@ -63,7 +58,7 @@ The appointment details page is the primary action surface for every actor after
    - `mentorEvaluationData.finalMeetingDate`
    Next status: `MentorEvaluationCompleted`
 
-6. **MentorEvaluationCompleted**
+5. **MentorEvaluationCompleted**
    Displayed when: Mentor evaluation is submitted and admin review is next.
    Primary actor: Admin
    Action to advance: Admin prepares final sign-off.
@@ -74,7 +69,7 @@ The appointment details page is the primary action surface for every actor after
    - `mentorEvaluationData.signOffPreparedBy`
    Next status: `AwaitingSignOff`
 
-7. **AwaitingSignOff**
+6. **AwaitingSignOff**
    Displayed when: Admin sign-off notes are prepared and final acknowledgment is pending.
    Primary actor: Admin
    Action to advance: Admin confirms final acknowledgment.
@@ -84,7 +79,7 @@ The appointment details page is the primary action surface for every actor after
    - `mentorEvaluationData.finalAcknowledgedBy`
    Next status: `FinalEvaluated`
 
-8. **FinalEvaluated**
+7. **FinalEvaluated**
    Displayed when: Evaluation cycle is fully complete.
    Primary actor: System / read-only
    Action to advance: none
@@ -109,3 +104,29 @@ The dashboard summary and appointments list reflect this same status model:
 - appointments by status
 - completion progress toward `FinalEvaluated`
 - pending / incomplete items within the signed-in user’s role scope
+
+## Expectation Goals Storage
+
+The expectation step stores goals in three related fields:
+
+- `expectationData.mentorGoals` contains the goals defined by the mentor during expectation setting
+- `expectationData.gaGoals` contains the 1 to 3 goals added by the GA during acknowledgment
+- `expectationData.goals` remains the combined list for compatibility with existing UI and older records
+
+The appointment details page prefers the split goal fields when available so it can render separate
+`Mentor-defined goals` and `GA goals` headings.
+
+## Meeting Date Display
+
+The appointments list and appointment details page show the most relevant workflow date in this order:
+
+- `mentorEvaluationData.finalMeetingDate`
+- `expectationData.expectationsMeetingDate`
+- legacy scheduled datetime fields if present
+
+If none of those values exist, the UI shows `Date not recorded yet`.
+
+## Migration Note
+
+If existing Postgres rows still use `AwaitingMentorEvaluation`, migrate them to
+`SelfEvaluationCompleted` before removing the enum value from the database type.

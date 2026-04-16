@@ -81,6 +81,7 @@ async function seed() {
         status: 'ExpectationSet' as const,
         appointmentCode: generateAppointmentCode(),
         expectationData: {
+          mentorGoals: ["Master React Query", "Implement Zod Validation"],
           goals: ["Master React Query", "Implement Zod Validation"],
           weeklyHours: 20,
           responsibilities: "Lead frontend development for the GradEval project.",
@@ -99,6 +100,7 @@ async function seed() {
         appointmentCode: generateAppointmentCode(),
         expectationData: { 
           goals: ["Research Assistance"], 
+          mentorGoals: ["Research Assistance"],
           weeklyHours: 15, 
           responsibilities: "Support data collection and analysis." 
         },
@@ -115,7 +117,7 @@ async function seed() {
         unitId: 'UNIT-B',
         status: 'AwaitingSignOff' as const,
         appointmentCode: generateAppointmentCode(),
-        expectationData: { goals: ["Lab Maintenance"] },
+        expectationData: { goals: ["Lab Maintenance"], mentorGoals: ["Lab Maintenance"] },
         selfEvaluationData: { 
           goalProgress: "Resolved maintenance backlog and improved documentation."
         },
@@ -134,15 +136,18 @@ async function seed() {
         gaId: gaD.id,
         mentorId: mentorA.id,
         unitId: 'UNIT-A',
-        status: 'AwaitingMentorEvaluation' as const,
+        status: 'SelfEvaluationCompleted' as const,
         appointmentCode: generateAppointmentCode(),
         expectationData: { 
+          mentorGoals: ["Discussion Section Support"],
           goals: ["Discussion Section Support"], 
           weeklyHours: 10, 
           responsibilities: "Lead weekly discussion sections for CS101." 
         },
         selfEvaluationData: { 
-          goalProgress: "Facilitated 10 sections and collected feedback."
+          goalProgress: "Facilitated 10 sections and collected feedback.",
+          strengths: "Clear facilitation and reliable classroom support.",
+          challenges: "Balancing prep time with grading deadlines."
         },
         mentorEvaluationData: {} as any
       },
@@ -153,6 +158,7 @@ async function seed() {
         status: 'MentorEvaluationCompleted' as const,
         appointmentCode: generateAppointmentCode(),
         expectationData: { 
+          mentorGoals: ["Grading Support"],
           goals: ["Grading Support"], 
           weeklyHours: 8, 
           responsibilities: "Grade assignments and provide rubric feedback." 
