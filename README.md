@@ -157,12 +157,12 @@ We welcome contributors. Start with `CONTRIBUTING.md` for setup, issue labels, a
 ---
 
 ## Tech Stack
-We use modern, industry-standard tools. If you are new to these, don't worry! Each sprint is designed to help you learn them piece-by-piece.
+This project uses a TypeScript-based stack across the frontend, backend, and database layers.
 
-- **Frontend:** React + shadcn/ui (Beautiful, accessible UI components).
-- **Backend:** Node.js + Drizzle ORM (A simple way to talk to our database using TypeScript).
-- **Database:** PostgreSQL (Running inside a Docker container).
-- **Authentication:** Better-auth (Handles our Mock Okta / OIDC login flow).
+- **Frontend:** React + shadcn/ui
+- **Backend:** Node.js + Drizzle ORM
+- **Database:** PostgreSQL
+- **Authentication:** Better Auth with a mock Okta / OIDC development flow
 
 ---
 
