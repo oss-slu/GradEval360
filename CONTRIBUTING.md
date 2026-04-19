@@ -96,6 +96,48 @@ If you are new to the project, start with issues labeled `good first issue`.
 - Add screenshots for UI changes.
 - Note any follow-up work or tradeoffs in the PR body.
 
+## Testing Guide
+
+Before opening a PR, run the checks that match your change:
+
+```bash
+npm test
+npm run test:coverage
+```
+
+Useful commands:
+
+- `npm test`: runs all workspace unit tests
+- `npm run test:coverage`: runs all workspace tests with enforced coverage thresholds
+- `npm --prefix server run test:integration`: runs the server integration script against a running backend
+- `npm run lint`: runs available workspace lint tasks
+
+Test placement rules:
+
+- Put frontend unit tests in `client/tests/unit/`
+- Put backend unit tests in `server/tests/unit/`
+- Put shared schema tests in `shared/tests/unit/`
+- Reserve `client/tests/integration/` and `server/tests/integration/` for multi-module flows
+- Reserve `tests/e2e/` for future full-system journeys
+- Reuse builders from `tests/fixtures/` before creating new ad hoc sample objects
+
+Coverage thresholds enforced in CI:
+
+- `client`: lines `>= 80`, branches `>= 70`, functions `>= 80`
+- `server`: lines `>= 80`, branches `>= 80`, functions `>= 80`
+- `shared`: lines `>= 80`, branches `>= 80`, functions `>= 50`
+
+## Code Boundaries
+
+Keep changes aligned with the repo boundaries:
+
+- `client/src/`: UI, page composition, browser-only behavior
+- `client/tests/`: frontend tests only
+- `server/src/routes/*.logic.ts`: pure workflow logic that should stay easy to unit test
+- `server/src/routes/*.ts`: request/response orchestration
+- `shared/schemas/`: shared contracts used by both client and server
+- `tests/fixtures/`: reusable test data builders shared across packages
+
 ---
 
 ## Communication

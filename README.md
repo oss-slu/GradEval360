@@ -49,6 +49,15 @@ GradEval360/
 └── docker-compose.yml  # The "Command Center" to start your database
 ```
 
+## Code Boundaries
+
+- `client/src/` owns UI rendering, page state, and browser interactions.
+- `server/src/routes/*.ts` owns HTTP orchestration, while `server/src/routes/*.logic.ts` owns pure workflow logic.
+- `shared/schemas/` owns contracts shared by client and server.
+- `client/tests/`, `server/tests/`, `shared/tests/`, and `tests/` own test code and fixtures only.
+
+See [tests/TESTING.md](./tests/TESTING.md) for the repository testing strategy.
+
 ---
 
 ## Architecture Diagram
@@ -115,6 +124,19 @@ Run these from the repository root unless noted otherwise:
 - Initialize DB (schema + seed): `cd server && npm run db:setup`
 - Push DB schema changes: `cd server && npm run db:push`
 - Auth smoke test: `cd server && npm run smoke:auth`
+- Run all automated tests: `npm test`
+
+## Seeded Test Identities
+The local seed data includes the shared mentor and GA identities below for smoke testing and workflow verification:
+
+- `mentorA@slu.edu`
+- `mentorB@slu.edu`
+- `gaA@slu.edu`
+- `gaB@slu.edu`
+- `gaC@slu.edu`
+- `gaD@slu.edu`
+
+If you need credentials for those accounts, retrieve them from the team’s approved secret store instead of committing them to the repository.
 
 ---
 

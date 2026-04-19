@@ -6,8 +6,12 @@ on:
   push:
     branches: [ main, develop ]
 
+permissions:
+  contents: write
+
 jobs:
   build-and-test:
+    if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip ci]')
     runs-on: ubuntu-latest
     env:
       DATABASE_URL: postgresql://user:password@localhost:5432/gradeval360
@@ -56,6 +60,9 @@ jobs:
       - name: Build Server
         run: npm --prefix server run build
 
+      - name: Build Client
+        run: npm --prefix client run build
+
       - name: Start Server
         run: |
           npm --prefix server run start > server.log 2>&1 &
@@ -77,11 +84,17 @@ jobs:
       - name: Run Server Integration Tests
         run: npm --prefix server run test:integration
 
+      - name: Run Auth Smoke Tests
+        run: npm --prefix server run smoke:auth
+
       - name: Print Server Logs on Failure
         if: failure()
         run: |
           echo "CI failure detected. Server logs:"
           cat server.log || true
 
-      - name: Run Tests
+      - name: Run Workspace Tests
         run: npm test
+
+      - name: Enforce Coverage Thresholds
+        run: npm run test:coverage

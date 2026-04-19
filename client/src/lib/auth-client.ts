@@ -1,7 +1,6 @@
 // client/src/lib/auth-client.ts
 import { createAuthClient } from "better-auth/react";
-
-const AUTH_BASE_URL = "http://localhost:3000";
+import { AUTH_BASE_URL, resolveAuthFetchInput } from "./auth-client.logic";
 
 export const authClient = createAuthClient({
   baseURL: AUTH_BASE_URL,
@@ -13,10 +12,7 @@ export const authClient = createAuthClient({
 type AuthFetchInput = string | URL | Request;
 
 export async function authFetch(input: AuthFetchInput, init?: RequestInit) {
-  const resolvedInput =
-    typeof input === "string" && !input.startsWith("http")
-      ? `${AUTH_BASE_URL}${input.startsWith("/") ? "" : "/"}${input}`
-      : input;
+  const resolvedInput = resolveAuthFetchInput(input);
   return fetch(resolvedInput, {
     credentials: "include",
     ...init,

@@ -12,7 +12,9 @@
     "shared"
   ],
   "scripts": {
+    "lint": "npm run lint --workspaces --if-present",
     "test": "npm test --workspaces",
+    "test:coverage": "npm run test:coverage --workspaces",
     "build": "npm run build --workspaces"
   },
   "devDependencies": {

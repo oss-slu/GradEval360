@@ -59,11 +59,19 @@ If you see `You are not allowed to access this app`:
 
 Use an Okta user with an email that exists in seed data, e.g.:
 
+- `mentorA@slu.edu`
+- `mentorB@slu.edu`
+- `gaA@slu.edu`
+- `gaB@slu.edu`
+- `gaC@slu.edu`
+- `gaD@slu.edu`
 - `premkiran.polepalli@slu.edu`
 - `darcy.mupenda@slu.edu`
 - `elizabeth.dreste@slu.edu`
 
 Source: `server/src/db/seed.ts`
+
+For the shared mentor and GA test identities above, retrieve credentials from the team’s approved secret store if you create matching users in your Okta test org.
 
 ## 4. Start Local Services
 
