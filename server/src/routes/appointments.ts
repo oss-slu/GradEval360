@@ -14,57 +14,21 @@ import {
   MentorExpectationSettingSchema,
   SelfEvaluationSchema,
 } from "../../../shared/schemas/appointment.js";
+import {
+  buildAppointmentSummary,
+  buildFinalAcknowledgmentUpdate,
+  buildFinalSignOffPreparationUpdate,
+  buildGAAcknowledgmentUpdate,
+  buildMentorEvaluationUpdate,
+  buildMentorExpectationUpdate,
+  canAccessAppointment,
+  getActorName,
+  type AppointmentExpectationDraft,
+  type AppointmentMentorEvaluationData,
+  type RequestUser,
+} from "./appointments.logic.js";
 
 const router = Router();
-
-type RequestUser = {
-  id: string;
-  role: "GA" | "Mentor" | "Admin";
-  unitId?: string | null;
-  unitIds?: string[];
-  name?: string | null;
-  fullName?: string | null;
-};
-
-type AppointmentExpectationDraft = {
-  goals?: string[];
-  mentorGoals?: string[];
-  gaGoals?: string[];
-  weeklyHours?: number;
-  responsibilities?: string;
-  jobCategory?: string;
-  expectedOutputs?: string;
-  expectationsMeetingDate?: string;
-  mentorNotes?: string;
-  mentorAcknowledged?: boolean;
-  mentorAcknowledgedAt?: string;
-  gaAcknowledged?: boolean;
-  gaAcknowledgedAt?: string;
-};
-
-type AppointmentExpectationData = AppointmentExpectationDraft & {
-  goals: string[];
-};
-
-type AppointmentMentorEvaluationData = {
-  ratings?: Record<string, number>;
-  narrative?: string;
-  overallSummary?: string;
-  finalMeetingDate?: string;
-  evaluationSubmittedAt?: string;
-  evaluationSubmittedBy?: string;
-  signOffDecision?: string;
-  signOffNotes?: string;
-  signOffPreparedAt?: string;
-  signOffPreparedBy?: string;
-  finalAcknowledged?: boolean;
-  finalAcknowledgedAt?: string;
-  finalAcknowledgedBy?: string;
-};
-
-function getActorName(user: RequestUser) {
-  return user.fullName ?? user.name ?? user.id;
-}
 
 async function ensureAppointmentCodes(records: any[]) {
   const updates: Array<{ id: string; code: string }> = [];
@@ -135,77 +99,13 @@ async function listAppointmentsForUser(user: RequestUser) {
   return [];
 }
 
-function canAccessAppointment(user: RequestUser, appointment: any) {
-  if (user.role === "GA") {
-    return appointment.gaId === user.id;
-  }
-
-  if (user.role === "Mentor") {
-    return appointment.mentorId === user.id;
-  }
-
-  if (user.role === "Admin") {
-    const allowedUnits = Array.isArray(user.unitIds) ? user.unitIds : [];
-    if (allowedUnits.length > 0) {
-      return allowedUnits.includes(appointment.unitId);
-    }
-
-    if (user.unitId) {
-      return appointment.unitId === user.unitId;
-    }
-
-    return true;
-  }
-
-  return false;
-}
-
 router.get("/summary", requireAuth, async (req: any, res) => {
   try {
     const user = req.user as RequestUser;
     const result = await listAppointmentsForUser(user);
     const withCodes = await ensureAppointmentCodes(result ?? []);
 
-    const statusCounts = Object.values(APPOINTMENT_STATUS).reduce<Record<string, number>>(
-      (accumulator, status) => {
-        accumulator[status] = 0;
-        return accumulator;
-      },
-      {}
-    );
-
-    for (const appointment of withCodes) {
-      statusCounts[appointment.status] = (statusCounts[appointment.status] ?? 0) + 1;
-    }
-
-    const totalAppointments = withCodes.length;
-    const completedAppointments = withCodes.filter(
-      (appointment) => appointment.status === APPOINTMENT_STATUS.FINAL
-    ).length;
-    const inProgressAppointments = withCodes.filter(
-      (appointment) => appointment.status !== APPOINTMENT_STATUS.FINAL
-    ).length;
-
-    const pendingItems = withCodes
-      .filter((appointment) => appointment.status !== APPOINTMENT_STATUS.FINAL)
-      .map((appointment) => ({
-        id: appointment.id,
-        appointmentCode: appointment.appointmentCode,
-        status: appointment.status,
-        gaId: appointment.gaId,
-        mentorId: appointment.mentorId,
-        unitId: appointment.unitId,
-      }));
-
-    return res.json({
-      totalAppointments,
-      completedAppointments,
-      inProgressAppointments,
-      completionPercentage:
-        totalAppointments === 0 ? 0 : Math.round((completedAppointments / totalAppointments) * 100),
-      statusCounts,
-      pendingItems,
-    });
+    return res.json(buildAppointmentSummary(withCodes));
   } catch (error) {
     console.error("Error fetching appointment summary:", error);
     return res.status(500).json({ error: "Server error" });
@@ -291,14 +191,11 @@ router.patch("/:id/expectations/setup", requireAuth, async (req: any, res) => {
         ? (appointment.expectationData as AppointmentExpectationDraft)
         : {};
 
-    const updatedExpectationData: AppointmentExpectationData = {
-      ...existingExpectationData,
-      ...parsed.data,
-      goals: parsed.data.goals,
-      mentorGoals: parsed.data.goals,
-      mentorAcknowledged: true,
-      mentorAcknowledgedAt: new Date().toISOString(),
-    };
+    const updatedExpectationData = buildMentorExpectationUpdate(
+      existingExpectationData,
+      parsed.data,
+      new Date().toISOString(),
+    );
 
     const [updatedAppointment] = await db
       .update(appointments)
@@ -355,21 +252,11 @@ router.patch("/:id/expectations", requireAuth, async (req: any, res) => {
         ? (appointment.expectationData as AppointmentExpectationDraft)
         : {};
 
-    const existingGoals = Array.isArray(existingExpectationData.goals)
-      ? existingExpectationData.goals
-      : [];
-    const existingMentorGoals = Array.isArray(existingExpectationData.mentorGoals)
-      ? existingExpectationData.mentorGoals
-      : existingGoals;
-
-    const updatedExpectationData: AppointmentExpectationData = {
-      ...existingExpectationData,
-      goals: [...existingMentorGoals, ...goals],
-      mentorGoals: existingMentorGoals,
-      gaGoals: goals,
-      gaAcknowledged: true,
-      gaAcknowledgedAt: new Date().toISOString(),
-    };
+    const updatedExpectationData = buildGAAcknowledgmentUpdate(
+      existingExpectationData,
+      { goals },
+      new Date().toISOString(),
+    );
 
     const [updatedAppointment] = await db
       .update(appointments)
@@ -472,12 +359,12 @@ router.post("/:id/mentor-evaluation", requireAuth, async (req: any, res) => {
         ? (appointment.mentorEvaluationData as AppointmentMentorEvaluationData)
         : {};
 
-    const updatedMentorEvaluationData: AppointmentMentorEvaluationData = {
-      ...existingMentorEvaluationData,
-      ...parsed.data,
-      evaluationSubmittedAt: new Date().toISOString(),
-      evaluationSubmittedBy: getActorName(user),
-    };
+    const updatedMentorEvaluationData = buildMentorEvaluationUpdate(
+      existingMentorEvaluationData,
+      parsed.data,
+      getActorName(user),
+      new Date().toISOString(),
+    );
 
     const [updatedAppointment] = await db
       .update(appointments)
@@ -531,13 +418,12 @@ router.post("/:id/final-signoff", requireAuth, async (req: any, res) => {
         });
       }
 
-      const updatedMentorEvaluationData: AppointmentMentorEvaluationData = {
-        ...existingMentorEvaluationData,
-        signOffDecision: parsed.data.signOffDecision,
-        signOffNotes: parsed.data.signOffNotes,
-        signOffPreparedAt: new Date().toISOString(),
-        signOffPreparedBy: getActorName(user),
-      };
+      const updatedMentorEvaluationData = buildFinalSignOffPreparationUpdate(
+        existingMentorEvaluationData,
+        parsed.data,
+        getActorName(user),
+        new Date().toISOString(),
+      );
 
       const [updatedAppointment] = await db
         .update(appointments)
@@ -560,12 +446,12 @@ router.post("/:id/final-signoff", requireAuth, async (req: any, res) => {
         });
       }
 
-      const updatedMentorEvaluationData: AppointmentMentorEvaluationData = {
-        ...existingMentorEvaluationData,
-        finalAcknowledged: parsed.data.finalAcknowledged,
-        finalAcknowledgedAt: new Date().toISOString(),
-        finalAcknowledgedBy: getActorName(user),
-      };
+      const updatedMentorEvaluationData = buildFinalAcknowledgmentUpdate(
+        existingMentorEvaluationData,
+        parsed.data,
+        getActorName(user),
+        new Date().toISOString(),
+      );
 
       const [updatedAppointment] = await db
         .update(appointments)

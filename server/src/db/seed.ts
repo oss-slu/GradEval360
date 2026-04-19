@@ -22,7 +22,6 @@ async function seed() {
     email: user.email.toLowerCase(),
   }));
 
-  // 1. Seed/Update Users
   for (const user of teamData) {
     await db.insert(users)
       .values(user)
@@ -62,7 +61,6 @@ async function seed() {
       await db.insert(userUnits).values(assignment).onConflictDoNothing();
     }
 
-    // Define your data with 'as const' to satisfy the strict enum types
     const appointmentData : NewAppointment[] = [
       {
         gaId: gaA.id,
@@ -177,7 +175,6 @@ async function seed() {
       }
     ];
 
-    // 3. Seed Appointments
     for (const appt of appointmentData) {
       await db.insert(appointments)
         .values(appt)

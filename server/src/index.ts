@@ -14,7 +14,6 @@ app.use(helmet());
 app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 app.use(express.json());
 
-// 1. Health Check (Top Level)
 const healthHandler = async (req: express.Request, res: express.Response) => {
   try {
     const session = await auth.api.getSession({
@@ -38,7 +37,6 @@ const healthHandler = async (req: express.Request, res: express.Response) => {
 app.get('/health', healthHandler);
 app.get('/api/health', healthHandler);
 
-// Compatibility route for Mock Okta sign-in flow.
 app.get("/api/auth/signin/okta", (_req, res) => {
   const callbackURL = process.env.OKTA_POST_LOGIN_REDIRECT_URL || "http://localhost:5173";
   const redirectScriptSrc = `/api/auth/signin/okta/redirect.js?callbackURL=${encodeURIComponent(callbackURL)}`;
@@ -93,19 +91,13 @@ fetch("/api/auth/sign-in/oauth2", {
     .send(script);
 });
 
-// Okta can be configured with /api/auth/callback/okta in dashboard; Better Auth handles /oauth2/callback/okta.
 app.get("/api/auth/callback/okta", (req, res) => {
   const query = req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : "";
   res.redirect(302, `/api/auth/oauth2/callback/okta${query}`);
 });
 
-// 2. Auth Handler
 app.all("/api/auth/*", toNodeHandler(auth));
-
-// 3. API Routes
 app.use("/api", apiRouter);
-
-// 4. Root
 app.get('/', (req, res) => res.send('GradEval360 API Online.'));
 
 app.listen(3000, () => console.log('Server running on http://localhost:3000'));

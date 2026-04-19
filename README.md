@@ -1,5 +1,21 @@
 # GradEval360
 
+<!-- README_METRICS_START -->
+## Live Project Signals
+
+[![CI](https://github.com/oss-slu/GradEval360/actions/workflows/ci.yml/badge.svg)](https://github.com/oss-slu/GradEval360/actions/workflows/ci.yml) ![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/oss-slu/GradEval360/main/.github/badges/coverage-summary.json)
+
+This snapshot is auto-updated from GitHub Actions on pushes to `main`.
+
+| Workspace | Line Coverage | Branch Coverage | Function Coverage |
+| --- | ---: | ---: | ---: |
+| Client | 94.68% | 72.92% | 100.00% |
+| Server | 98.54% | 78.13% | 88.24% |
+| Shared | 100.00% | 100.00% | 50.00% |
+
+Last metrics refresh: 2026-04-19 04:54:43.859Z
+<!-- README_METRICS_END -->
+
 Welcome to the **GradEval360** development team! This project is the centralized performance management platform for Saint Louis University's Graduate Assistants.
 
 ## Project Focus: Spring 2026
@@ -48,6 +64,15 @@ GradEval360/
 ├── docs/               # Team docs (setup, auth, references)
 └── docker-compose.yml  # The "Command Center" to start your database
 ```
+
+## Code Boundaries
+
+- `client/src/` owns UI rendering, page state, and browser interactions.
+- `server/src/routes/*.ts` owns HTTP orchestration, while `server/src/routes/*.logic.ts` owns pure workflow logic.
+- `shared/schemas/` owns contracts shared by client and server.
+- `client/tests/`, `server/tests/`, `shared/tests/`, and `tests/` own test code and fixtures only.
+
+See [tests/TESTING.md](./tests/TESTING.md) for the repository testing strategy.
 
 ---
 
@@ -115,6 +140,20 @@ Run these from the repository root unless noted otherwise:
 - Initialize DB (schema + seed): `cd server && npm run db:setup`
 - Push DB schema changes: `cd server && npm run db:push`
 - Auth smoke test: `cd server && npm run smoke:auth`
+- Run all automated tests: `npm test`
+- Run test coverage across all workspaces: `npm run test:coverage`
+
+## Seeded Test Identities
+The local seed data includes the shared mentor and GA identities below for smoke testing and workflow verification:
+
+- `mentorA@slu.edu`
+- `mentorB@slu.edu`
+- `gaA@slu.edu`
+- `gaB@slu.edu`
+- `gaC@slu.edu`
+- `gaD@slu.edu`
+
+If you need credentials for those accounts, retrieve them from the team’s approved secret store instead of committing them to the repository.
 
 ---
 

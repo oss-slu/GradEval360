@@ -3,7 +3,7 @@ import { fromNodeHeaders } from "better-auth/node";
 import { auth } from "../db/auth.js";
 
 import { db } from "../db/index.js"; 
-import { users, userUnits } from "../db/schema.js";  // adjust if needed
+import { users, userUnits } from "../db/schema.js";
 import { eq, sql } from "drizzle-orm";
 
 export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
@@ -37,7 +37,6 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
             .where(eq(userUnits.userId, dbUser[0].id));
         const unitIds = unitRows.map((row) => row.unitId);
 
-        // Attach the user and role to the request for easy access in routes
         (req as any).user = {
             ...session.user,
             id: dbUser[0].id,

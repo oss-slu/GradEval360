@@ -13,7 +13,8 @@
     "db:push": "npx drizzle-kit push",
     "build": "tsc",
     "start": "tsx src/index.ts",
-    "test": "echo 'No server tests yet' && exit 0"
+    "test": "node --import ./node_modules/tsx/dist/loader.mjs --test tests/unit/*.test.ts",
+    "test:coverage": "node --import ./node_modules/tsx/dist/loader.mjs --test --experimental-test-coverage --test-coverage-lines=95 --test-coverage-branches=75 --test-coverage-functions=85 tests/unit/*.test.ts"
   },
   "keywords": [],
   "author": "",

@@ -6,7 +6,8 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
-    "test": "vitest run"
+    "test": "node --import ../server/node_modules/tsx/dist/loader.mjs --test tests/unit/*.test.ts",
+    "test:coverage": "node --import ../server/node_modules/tsx/dist/loader.mjs --test --experimental-test-coverage --test-coverage-lines=100 --test-coverage-branches=100 --test-coverage-functions=50 tests/unit/*.test.ts"
   },
   "keywords": [],
   "author": "",

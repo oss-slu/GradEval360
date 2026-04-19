@@ -1,4 +1,4 @@
-import { LayoutDashboard, CalendarDays } from "lucide-react"; // Import icons
+import { LayoutDashboard, CalendarDays } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -19,7 +19,7 @@ export function AppSidebar() {
   const pathname = window.location.pathname;
 
   return (
-    <Sidebar collapsible="icon"> {/* Enables the "Icon Rail" mode when collapsed */}
+    <Sidebar collapsible="icon">
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>GradEval360</SidebarGroupLabel>
@@ -31,7 +31,7 @@ export function AppSidebar() {
                   <SidebarMenuItem key={item.to}>
                     <SidebarMenuButton asChild isActive={isActive} tooltip={item.label}>
                       <a href={item.to}>
-                        <item.icon className="h-4 w-4" /> {/* Icon is now visible */}
+                        <item.icon className="h-4 w-4" />
                         <span>{item.label}</span>
                       </a>
                     </SidebarMenuButton>

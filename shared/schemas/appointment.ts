@@ -1,13 +1,11 @@
 
 import { z } from 'zod';
 
-
-// The specific data captured during the first phase of the GA cycle
 export const ExpectationSettingSchema = z.object({
   appointmentId: z.string().uuid(),
   goals: z.array(z.string().min(5, "Goal must be at least 5 characters")).nonempty("At least one goal is required"),
   responsibilities: z.string().min(10, "Please provide more detail on responsibilities"),
-  weeklyHours: z.number().min(1).max(20), // Standard GA limit
+  weeklyHours: z.number().min(1).max(20),
   stipendConfirmed: z.boolean().refine(val => val === true, "Must confirm stipend details"),
   mentorNotes: z.string().optional(),
   gaAcknowledged: z.boolean().optional(),
@@ -32,7 +30,6 @@ export const MentorExpectationSettingSchema = z
   })
   .strict();
 
-// Strict schema for GA acknowledgment payload only
 export const GAAcknowledgeExpectationsSchema = z
   .object({
     goals: z
@@ -42,12 +39,10 @@ export const GAAcknowledgeExpectationsSchema = z
   })
   .strict();
 
-// TypeScript type inference
 export type ExpectationSettingInput = z.infer<typeof ExpectationSettingSchema>;
 export type MentorExpectationSettingInput = z.infer<typeof MentorExpectationSettingSchema>;
 export type GAAcknowledgeExpectationsInput = z.infer<typeof GAAcknowledgeExpectationsSchema>;
 
-// Shared Constants for the UI
 export const APPOINTMENT_STATUS = {
   AWAITING: 'AwaitingExpectationSetting',
   SET: 'ExpectationSet',
@@ -64,16 +59,6 @@ export const SelfEvaluationSchema = z.object({
   challenges: z.string().min(5, "Must be at least 5 characters"),
   additionalComments: z.string().optional(),
 });
-
-/*
-export const SelfEvaluationSchema = z.object({
-  appointmentId: z.string().uuid(),
-  goalProgress: z.string().min(5, "Please describe your goal progress").optional(),
-  strengths: z.string().min(5, "Please describe strengths").optional(),
-  challenges: z.string().min(5, "Please describe challenges").optional(),
-  additionalComments: z.string().optional(),
-});
-*/
 
 export const MentorEvaluationSchema = z.object({
   ratings: z
@@ -105,16 +90,12 @@ export const FinalAcknowledgmentSchema = z
   .strict();
 
 export const AppointmentSchema = z.object({
-
   id: z.string().uuid(),
   appointmentCode: z.string(),
-
   gaId: z.string().uuid(),
   mentorId: z.string().uuid(),
   unitId: z.string(),
-
   status: z.string(),
-
   expectationData: z.any(),
   selfEvaluationData: z.any(),
   mentorEvaluationData: z.any(), 

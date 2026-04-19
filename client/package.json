@@ -9,7 +9,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "echo 'No client tests yet' && exit 0"
+    "test": "node --import ../server/node_modules/tsx/dist/loader.mjs --test tests/unit/*.test.ts",
+    "test:coverage": "node --import ../server/node_modules/tsx/dist/loader.mjs --test --experimental-test-coverage --test-coverage-lines=90 --test-coverage-branches=70 --test-coverage-functions=100 tests/unit/*.test.ts"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "1.1.11",

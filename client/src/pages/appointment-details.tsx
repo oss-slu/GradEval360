@@ -10,107 +10,15 @@ import MentorEvalForm from "@/components/appointments/mentor-eval-form";
 import SelfEvalForm from "@/components/appointments/self-eval-form";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { authClient, authFetch } from "@/lib/auth-client";
-
-type AppointmentDetails = {
-  id: string;
-  appointmentCode?: string;
-  status?: string;
-  title?: string;
-  subject?: string;
-  name?: string;
-  startsAt?: string;
-  startTime?: string;
-  scheduledAt?: string;
-  starts_at?: string;
-  start_time?: string;
-  scheduled_at?: string;
-  date?: string;
-  time?: string;
-  unitId?: string;
-  gaName?: string;
-  mentorName?: string;
-  expectationData?: {
-    goals?: string[];
-    mentorGoals?: string[];
-    gaGoals?: string[];
-    weeklyHours?: number;
-    responsibilities?: string;
-    jobCategory?: string;
-    expectedOutputs?: string;
-    expectationsMeetingDate?: string;
-    mentorNotes?: string;
-    mentorAcknowledged?: boolean;
-    mentorAcknowledgedAt?: string;
-    gaAcknowledged?: boolean;
-    gaAcknowledgedAt?: string;
-  };
-  selfEvaluationData?: {
-    goalProgress?: string;
-    strengths?: string;
-    challenges?: string;
-    additionalComments?: string;
-  };
-  mentorEvaluationData?: {
-    ratings?: Record<string, number>;
-    narrative?: string;
-    overallSummary?: string;
-    finalMeetingDate?: string;
-    evaluationSubmittedAt?: string;
-    evaluationSubmittedBy?: string;
-    signOffDecision?: string;
-    signOffNotes?: string;
-    signOffPreparedAt?: string;
-    signOffPreparedBy?: string;
-    finalAcknowledged?: boolean;
-    finalAcknowledgedAt?: string;
-    finalAcknowledgedBy?: string;
-  };
-};
-
-const STATUS_COPY: Record<
-  string,
-  {
-    label: string;
-    owner: string;
-    helper: string;
-  }
-> = {
-  AwaitingExpectationSetting: {
-    label: "Awaiting expectation setting",
-    owner: "Mentor",
-    helper: "Mentor should define the work plan, goals, and meeting details.",
-  },
-  ExpectationSet: {
-    label: "Expectation set",
-    owner: "GA",
-    helper: "GA should review the plan and acknowledge expectations.",
-  },
-  AwaitingSelfEvaluation: {
-    label: "Awaiting self-evaluation",
-    owner: "GA",
-    helper: "GA reflection is the next required action.",
-  },
-  SelfEvaluationCompleted: {
-    label: "Self-evaluation completed",
-    owner: "Mentor",
-    helper: "Mentor should review the GA reflection and submit the mentor evaluation next.",
-  },
-  MentorEvaluationCompleted: {
-    label: "Mentor evaluation completed",
-    owner: "Admin",
-    helper: "Admin should prepare final sign-off and review completion.",
-  },
-  AwaitingSignOff: {
-    label: "Awaiting sign-off",
-    owner: "Admin",
-    helper: "Admin can finalize the evaluation cycle from this page.",
-  },
-  FinalEvaluated: {
-    label: "Final evaluated",
-    owner: "Complete",
-    helper: "All Milestone 2 evaluation steps are complete.",
-  },
-};
+import {
+  deriveGoalSections,
+  formatDateTime,
+  formatTimestamp,
+  getAppointmentTitle,
+  getAvailableActions,
+  STATUS_COPY,
+  type AppointmentDetails,
+} from "./appointment-details.logic";
 
 const ratingLabels: Record<string, string> = {
   communication: "Communication",
@@ -118,68 +26,6 @@ const ratingLabels: Record<string, string> = {
   initiative: "Initiative",
   qualityOfWork: "Quality of work",
 };
-
-function formatDateTime(appointment: AppointmentDetails) {
-  const finalMeetingDate = appointment.mentorEvaluationData?.finalMeetingDate;
-  if (finalMeetingDate) {
-    return {
-      label: "Final meeting date",
-      value: formatTimestamp(finalMeetingDate) ?? finalMeetingDate,
-    };
-  }
-
-  const expectationsMeetingDate = appointment.expectationData?.expectationsMeetingDate;
-  if (expectationsMeetingDate) {
-    return {
-      label: "Expectations meeting date",
-      value: formatTimestamp(expectationsMeetingDate) ?? expectationsMeetingDate,
-    };
-  }
-
-  const rawDateTime =
-    appointment.startsAt ??
-    appointment.startTime ??
-    appointment.scheduledAt ??
-    appointment.starts_at ??
-    appointment.start_time ??
-    appointment.scheduled_at ??
-    appointment.date;
-
-  if (!rawDateTime) {
-    return appointment.time
-      ? { label: "Scheduled", value: `Time: ${appointment.time}` }
-      : { label: "Meeting date", value: "Date not recorded yet" };
-  }
-
-  const parsed = new Date(rawDateTime);
-
-  if (Number.isNaN(parsed.getTime())) {
-    return {
-      label: "Scheduled",
-      value: appointment.time ? `${rawDateTime} at ${appointment.time}` : rawDateTime,
-    };
-  }
-
-  return {
-    label: "Scheduled",
-    value: appointment.time ? `${parsed.toLocaleString()} at ${appointment.time}` : parsed.toLocaleString(),
-  };
-}
-
-function formatTimestamp(value?: string) {
-  if (!value) return null;
-
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return value;
-  }
-
-  return parsed.toLocaleString();
-}
-
-function getAppointmentTitle(appointment: AppointmentDetails) {
-  return appointment.title || appointment.subject || appointment.name || "Appointment";
-}
 
 type TimelineItemProps = {
   title: string;
@@ -253,32 +99,8 @@ export default function AppointmentDetailsPage() {
     void refreshAppointment();
   }, [id]);
 
-  const expectationGoals = useMemo(() => appointment?.expectationData?.goals ?? [], [appointment]);
-  const mentorGoals = useMemo(() => {
-    const explicitMentorGoals = appointment?.expectationData?.mentorGoals;
-    if (Array.isArray(explicitMentorGoals) && explicitMentorGoals.length > 0) {
-      return explicitMentorGoals;
-    }
-
-    if (!appointment?.expectationData?.gaAcknowledged) {
-      return expectationGoals;
-    }
-
-    return [];
-  }, [appointment, expectationGoals]);
-  const gaGoals = useMemo(() => {
-    const explicitGaGoals = appointment?.expectationData?.gaGoals;
-    if (Array.isArray(explicitGaGoals) && explicitGaGoals.length > 0) {
-      return explicitGaGoals;
-    }
-
-    return [];
-  }, [appointment]);
-  const hasLegacyCombinedGoals =
-    expectationGoals.length > 0 &&
-    appointment?.expectationData?.gaAcknowledged &&
-    mentorGoals.length === 0 &&
-    gaGoals.length === 0;
+  const goalSections = useMemo(() => deriveGoalSections(appointment), [appointment]);
+  const { expectationGoals, mentorGoals, gaGoals, hasLegacyCombinedGoals } = goalSections;
 
   const userRoleRaw =
     (session?.user as any)?.role ??
@@ -289,16 +111,13 @@ export default function AppointmentDetailsPage() {
   const statusInfo = appointment?.status ? STATUS_COPY[appointment.status] : null;
   const dateInfo = appointment ? formatDateTime(appointment) : null;
 
-  const canSetExpectations =
-    userRole === "Mentor" && appointment?.status === "AwaitingExpectationSetting";
-  const canAcknowledgeExpectations = userRole === "GA" && appointment?.status === "ExpectationSet";
-  const canSubmitSelfEval = userRole === "GA" && appointment?.status === "AwaitingSelfEvaluation";
-  const canSubmitMentorEval =
-    userRole === "Mentor" && appointment?.status === "SelfEvaluationCompleted";
-  const canCompleteSignOff =
-    userRole === "Admin" &&
-    (appointment?.status === "MentorEvaluationCompleted" ||
-      appointment?.status === "AwaitingSignOff");
+  const {
+    canSetExpectations,
+    canAcknowledgeExpectations,
+    canSubmitSelfEval,
+    canSubmitMentorEval,
+    canCompleteSignOff,
+  } = getAvailableActions(userRole, appointment?.status);
 
   return (
     <SidebarProvider defaultOpen={false}>
