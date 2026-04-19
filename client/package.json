@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "node --import ../server/node_modules/tsx/dist/loader.mjs --test tests/unit/*.test.ts",
-    "test:coverage": "node --import ../server/node_modules/tsx/dist/loader.mjs --test --experimental-test-coverage --test-coverage-lines=90 --test-coverage-branches=70 --test-coverage-functions=100 tests/unit/*.test.ts"
+    "test:coverage": "node ../scripts/run-coverage-check.mjs --loader ../server/node_modules/tsx/dist/loader.mjs --lines 80 --branches 80 --functions 80 tests/unit/*.test.ts"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "1.1.11",

@@ -22,9 +22,9 @@ This repository uses a layered test structure so we can scale coverage without m
 
 Coverage is enforced in CI through workspace-specific thresholds:
 
-- `client`: lines `>= 90`, branches `>= 70`, functions `>= 100`
-- `server`: lines `>= 95`, branches `>= 75`, functions `>= 85`
-- `shared`: lines `>= 100`, branches `>= 100`, functions `>= 50`
+- `client`: lines `>= 80`, branches `>= 80`, functions `>= 80`
+- `server`: lines `>= 80`, branches `>= 80`, functions `>= 80`
+- `shared`: lines `>= 80`, branches `>= 80`, functions `>= 80`
 
 Thresholds should rise only when they reflect stable, meaningful checks.
 

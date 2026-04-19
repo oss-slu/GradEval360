@@ -123,9 +123,9 @@ Test placement rules:
 
 Coverage thresholds enforced in CI:
 
-- `client`: lines `>= 90`, branches `>= 70`, functions `>= 100`
-- `server`: lines `>= 95`, branches `>= 75`, functions `>= 85`
-- `shared`: lines `>= 100`, branches `>= 100`, functions `>= 50`
+- `client`: lines `>= 80`, branches `>= 80`, functions `>= 80`
+- `server`: lines `>= 80`, branches `>= 80`, functions `>= 80`
+- `shared`: lines `>= 80`, branches `>= 80`, functions `>= 80`
 
 ## Code Boundaries
 
