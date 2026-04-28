@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Building2, Mail, ShieldCheck, User2, Users2 } from "lucide-react";
-
+import { authFetch } from "@/lib/auth-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
@@ -88,12 +88,8 @@ export default function ProfilePage() {
         setLoading(true);
         setError(null);
 
-        const response = await fetch("/api/users/profile", {
+        const response = await authFetch("/api/users/profile", {
           method: "GET",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
         });
 
         if (!response.ok) {
