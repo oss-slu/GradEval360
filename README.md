@@ -159,6 +159,7 @@ Helpful references in `docs/`:
 - Appointment status enum: [docs/status-enum.md](./docs/status-enum.md)
 - Product strategy draft: [docs/strategy/product-strategy.md](./docs/strategy/product-strategy.md)
 - Community strategy draft: [docs/strategy/community-strategy.md](./docs/strategy/community-strategy.md)
+- Threat model: [docs/security/threat-model.md](./docs/security/threat-model.md)
 
 ## Workflow Summary
 The annual evaluation lifecycle now progresses through these statuses:
