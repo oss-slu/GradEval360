@@ -1,4 +1,4 @@
-import { LayoutDashboard, CalendarDays } from "lucide-react";
+import { LayoutDashboard, CalendarDays, UserCircle2 } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -13,6 +13,7 @@ import {
 const navItems = [
   { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
   { label: "My Appointments", to: "/appointments", icon: CalendarDays },
+  { label: "Profile", to: "/profile", icon: UserCircle2 },
 ];
 
 export function AppSidebar() {

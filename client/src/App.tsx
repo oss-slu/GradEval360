@@ -7,6 +7,7 @@ import AppointmentDetailsPage from "@/pages/appointment-details";
 import AppointmentsPage from "@/pages/appointments";
 import DashboardPage from "@/pages/dashboard";
 import LoginPage from "@/pages/login";
+import ProfilePage from "@/pages/profile";
 
 const { useSession } = authClient;
 
@@ -37,6 +38,7 @@ function AppRoutes() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/appointments" element={<AppointmentsPage />} />
         <Route path="/appointments/:id" element={<AppointmentDetailsPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
       </Route>
       <Route path="*" element={<Navigate to={isAuthed ? "/dashboard" : "/login"} replace />} />
     </Routes>
