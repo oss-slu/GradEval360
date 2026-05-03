@@ -2,6 +2,7 @@ import { authClient, authFetch } from "@/lib/auth-client";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 export function AppHeader() {
   const { data: session } = authClient.useSession();
@@ -61,12 +62,14 @@ export function AppHeader() {
               </span>
             </div>
 
-            <Avatar className="h-9 w-9 border shadow-sm">
-              <AvatarImage src={user.image || ""} />
-              <AvatarFallback className="bg-indigo-600 text-white text-xs font-bold">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
+            <Link to="/profile">
+              <Avatar className="h-9 w-9 border shadow-sm cursor-pointer hover:opacity-80 transition">
+                <AvatarImage src={user.image || ""} />
+                <AvatarFallback className="bg-indigo-600 text-white text-xs font-bold">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+            </Link>
 
             <Button
               variant="ghost"
