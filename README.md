@@ -153,10 +153,12 @@ Use these to verify everything is running correctly:
 ## Docs Index
 Helpful references in `docs/`:
 
-- Setup guide: `docs/setup.md`
-- Okta setup + smoke test: `docs/OKTA_SETUP_AND_SMOKE_TEST.md`
-- Auth tables and flow: `docs/AUTH_TABLES_AND_FLOW.md`
-- Appointment status enum: `docs/status-enum.md`
+- Setup guide: [docs/setup.md](./docs/setup.md)
+- Okta setup + smoke test: [docs/OKTA_SETUP_AND_SMOKE_TEST.md](./docs/OKTA_SETUP_AND_SMOKE_TEST.md)
+- Auth tables and flow: [docs/AUTH_TABLES_AND_FLOW.md](./docs/AUTH_TABLES_AND_FLOW.md)
+- Appointment status enum: [docs/status-enum.md](./docs/status-enum.md)
+- Product strategy draft: [docs/strategy/product-strategy.md](./docs/strategy/product-strategy.md)
+- Community strategy draft: [docs/strategy/community-strategy.md](./docs/strategy/community-strategy.md)
 
 ## Workflow Summary
 The annual evaluation lifecycle now progresses through these statuses:
@@ -167,7 +169,7 @@ The annual evaluation lifecycle now progresses through these statuses:
 ---
 
 ## Contributing
-We welcome contributors. Start with `CONTRIBUTING.md` for setup, issue labels, and PR expectations.
+We welcome contributors. Start with [CONTRIBUTING.md](./CONTRIBUTING.md) for setup, issue labels, and PR expectations.
 
 ---
 
