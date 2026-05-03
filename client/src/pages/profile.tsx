@@ -1,8 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { Building2, Mail, ShieldCheck, User2, Users2 } from "lucide-react";
+
+import { AppHeader } from "@/components/app-header";
+import { AppSidebar } from "@/components/app-sidebar";
 import { authFetch } from "@/lib/auth-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
 type UnitLike =
   | string
@@ -127,55 +131,40 @@ export default function ProfilePage() {
     return profile.assignedUnits.join(", ");
   }, [profile]);
 
+  let content: React.ReactNode;
+
   if (loading) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center px-6 py-10">
-        <div className="text-sm text-muted-foreground">Loading profile...</div>
+    content = (
+      <div className="rounded-xl border bg-white p-6 shadow-sm">
+        <p className="text-sm text-muted-foreground">Loading profile...</p>
       </div>
     );
-  }
-
-  if (error) {
-    return (
-      <div className="mx-auto w-full max-w-4xl px-6 py-10">
-        <Card>
-          <CardHeader>
-            <CardTitle>Profile</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="rounded-md border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
-              {error}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+  } else if (error) {
+    content = (
+      <Card>
+        <CardHeader>
+          <CardTitle>Profile</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+            {error}
+          </div>
+        </CardContent>
+      </Card>
     );
-  }
-
-  if (!profile) {
-    return (
-      <div className="mx-auto w-full max-w-4xl px-6 py-10">
-        <Card>
-          <CardHeader>
-            <CardTitle>Profile</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm text-muted-foreground">No profile data found.</div>
-          </CardContent>
-        </Card>
-      </div>
+  } else if (!profile) {
+    content = (
+      <Card>
+        <CardHeader>
+          <CardTitle>Profile</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-sm text-muted-foreground">No profile data found.</div>
+        </CardContent>
+      </Card>
     );
-  }
-
-  return (
-    <div className="mx-auto w-full max-w-4xl px-6 py-10">
-      <div className="mb-6">
-        <h1 className="text-3xl font-semibold tracking-tight">Profile</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          View your account details and assigned units.
-        </p>
-      </div>
-
+  } else {
+    content = (
       <Card>
         <CardHeader>
           <CardTitle>Your Information</CardTitle>
@@ -202,6 +191,32 @@ export default function ProfilePage() {
           </div>
         </CardContent>
       </Card>
-    </div>
+    );
+  }
+
+  return (
+    <SidebarProvider defaultOpen={false}>
+      <div className="flex h-screen w-screen overflow-hidden bg-background">
+        <AppSidebar />
+        <SidebarInset className="flex h-full min-w-0 flex-1 flex-col">
+          <AppHeader />
+          <main className="flex-1 overflow-y-auto bg-slate-50/50 p-8">
+            <div className="mx-auto max-w-4xl space-y-6">
+              <div className="flex items-center gap-4">
+                <SidebarTrigger className="md:hidden" />
+                <div>
+                  <h1 className="text-3xl font-semibold tracking-tight">Profile</h1>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    View your account details and assigned units.
+                  </p>
+                </div>
+              </div>
+
+              {content}
+            </div>
+          </main>
+        </SidebarInset>
+      </div>
+    </SidebarProvider>
   );
 }
