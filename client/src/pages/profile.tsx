@@ -19,12 +19,16 @@ type RawProfileResponse = {
   fullName?: string;
   email?: string;
   role?: string;
+  unitId?: string | null;
+  unitIds?: string[] | null;
   primaryUnit?: UnitLike | null;
   assignedUnits?: UnitLike[] | null;
   user?: {
     fullName?: string;
     email?: string;
     role?: string;
+    unitId?: string | null;
+    unitIds?: string[] | null;
     primaryUnit?: UnitLike | null;
     assignedUnits?: UnitLike[] | null;
   };
@@ -46,14 +50,17 @@ function getUnitName(unit: UnitLike | null | undefined): string {
 
 function normalizeProfile(data: RawProfileResponse): ProfileData {
   const source = data.user ?? data;
+  const assignedUnits =
+    source.assignedUnits?.map((unit) => getUnitName(unit)).filter((name) => name !== "—") ??
+    source.unitIds?.filter((unitId): unitId is string => Boolean(unitId)) ??
+    [];
 
   return {
     fullName: source.fullName ?? "—",
     email: source.email ?? "—",
     role: source.role ?? "—",
-    primaryUnit: getUnitName(source.primaryUnit),
-    assignedUnits:
-      source.assignedUnits?.map((unit) => getUnitName(unit)).filter((name) => name !== "—") ?? [],
+    primaryUnit: source.unitId ?? getUnitName(source.primaryUnit),
+    assignedUnits,
   };
 }
 
