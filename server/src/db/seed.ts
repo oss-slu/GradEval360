@@ -16,7 +16,8 @@ async function seed() {
     { email: 'jahnavi.darisetti@slu.edu', fullName: 'Jahnavi Darisetti', role: 'Admin' as const, unitId: 'UNIT-A' },
     { email: 'premkiran.polepalli@slu.edu', fullName: 'Prem Kiran', role: 'Admin' as const, unitId: 'UNIT-A' },
     { email: 'elizabeth.dreste@slu.edu', fullName: 'Elizabeth Dreste', role: 'Admin' as const, unitId: 'UNIT-B' },
-    { email: 'darcy.mupenda@slu.edu', fullName: 'Darcy Mupenda', role: 'Admin' as const, unitId: 'UNIT-B' }
+    { email: 'darcy.mupenda@slu.edu', fullName: 'Darcy Mupenda', role: 'Admin' as const, unitId: 'UNIT-B' },
+    { email: 'bott003@slu.edu', fullName: 'Bella Ott', role: 'Admin' as const, unitId: 'UNIT-A' },
   ].map((user) => ({
     ...user,
     email: user.email.toLowerCase(),
@@ -44,10 +45,11 @@ async function seed() {
   const prem = findUser('premkiran.polepalli@slu.edu');
   const elizabeth = findUser('elizabeth.dreste@slu.edu');
   const darcy = findUser('darcy.mupenda@slu.edu');
+  const bella = findUser('bott003@slu.edu');
 
   type NewAppointment = InferInsertModel<typeof appointments>;
 
-  if (mentorA && mentorB && gaA && gaB && gaC && gaD && jahnavi && prem && elizabeth && darcy) {
+  if (mentorA && mentorB && gaA && gaB && gaC && gaD && jahnavi && prem && elizabeth && darcy && bella) {
     const unitAssignments = [
       { userId: gaA.id, unitId: 'UNIT-A' },
       { userId: gaA.id, unitId: 'UNIT-B' },
