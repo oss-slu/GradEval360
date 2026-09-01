@@ -13,10 +13,10 @@ async function seed() {
     { email: 'gaB@slu.edu', fullName: 'GA B', role: 'GA' as const, unitId: null },
     { email: 'gaC@slu.edu', fullName: 'GA C', role: 'GA' as const, unitId: null },
     { email: 'gaD@slu.edu', fullName: 'GA D', role: 'GA' as const, unitId: null },
-    { email: 'jahnavi.darisetti@slu.edu', fullName: 'Jahnavi Darisetti', role: 'Admin' as const, unitId: 'UNIT-A' },
-    { email: 'premkiran.polepalli@slu.edu', fullName: 'Prem Kiran', role: 'Admin' as const, unitId: 'UNIT-A' },
-    { email: 'elizabeth.dreste@slu.edu', fullName: 'Elizabeth Dreste', role: 'Admin' as const, unitId: 'UNIT-B' },
-    { email: 'darcy.mupenda@slu.edu', fullName: 'Darcy Mupenda', role: 'Admin' as const, unitId: 'UNIT-B' }
+    { email: 'bott003@slu.edu', fullName: 'Bella Ott', role: 'Admin' as const, unitId: 'UNIT-A' },
+    { email: 'david.pan@slu.edu', fullName: 'David Pan', role: 'Admin' as const, unitId: 'UNIT-B' },
+    { email: 'melody.neimeyer@slu.edu', fullName: 'Melody Neimeyer', role: 'Admin' as const, unitId: 'UNIT-A' },
+    { email: 'jada.harvey.1@slu.edu', fullName: 'Jada Harvey', role: 'Admin' as const, unitId: 'UNIT-B' },
   ].map((user) => ({
     ...user,
     email: user.email.toLowerCase(),
@@ -40,14 +40,14 @@ async function seed() {
   const gaB = findUser('gaB@slu.edu'.toLowerCase());
   const gaC = findUser('gaC@slu.edu'.toLowerCase());
   const gaD = findUser('gaD@slu.edu'.toLowerCase());
-  const jahnavi = findUser('jahnavi.darisetti@slu.edu');
-  const prem = findUser('premkiran.polepalli@slu.edu');
-  const elizabeth = findUser('elizabeth.dreste@slu.edu');
-  const darcy = findUser('darcy.mupenda@slu.edu');
+  const bella = findUser('bott003@slu.edu');
+  const david = findUser('david.pan@slu.edu');
+  const melody = findUser('melody.neimeyer@slu.edu');
+  const jada = findUser('jada.harvey.1@slu.edu');
 
   type NewAppointment = InferInsertModel<typeof appointments>;
 
-  if (mentorA && mentorB && gaA && gaB && gaC && gaD && jahnavi && prem && elizabeth && darcy) {
+  if (mentorA && mentorB && gaA && gaB && gaC && gaD && bella && david && melody && jada) {
     const unitAssignments = [
       { userId: gaA.id, unitId: 'UNIT-A' },
       { userId: gaA.id, unitId: 'UNIT-B' },
