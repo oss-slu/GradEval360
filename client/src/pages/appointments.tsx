@@ -143,7 +143,7 @@ export default function AppointmentsPage() {
         <button
           type="button"
           className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800"
-          onClick={() => navigate(`/appointments/${appointmentId}`)}
+          onClick={() => navigate(`/appointments/${appointmentId}/evaluation`)}
         >
           {label}
         </button>
