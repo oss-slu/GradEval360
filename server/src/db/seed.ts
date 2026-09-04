@@ -14,7 +14,7 @@ async function seed() {
     { email: 'gaC@slu.edu', fullName: 'GA C', role: 'GA' as const, unitId: null },
     { email: 'gaD@slu.edu', fullName: 'GA D', role: 'GA' as const, unitId: null },
     { email: 'bott003@slu.edu', fullName: 'Bella Ott', role: 'Admin' as const, unitId: 'UNIT-A' },
-    { email: 'david.pan@slu.edu', fullName: 'David Pan', role: 'Admin' as const, unitId: 'UNIT-B' },
+    { email: 'david.g.pan@slu.edu', fullName: 'David Pan', role: 'Admin' as const, unitId: 'UNIT-B' },
     { email: 'melody.neimeyer@slu.edu', fullName: 'Melody Neimeyer', role: 'Admin' as const, unitId: 'UNIT-A' },
     { email: 'jada.harvey.1@slu.edu', fullName: 'Jada Harvey', role: 'Admin' as const, unitId: 'UNIT-B' },
   ].map((user) => ({
@@ -40,10 +40,10 @@ async function seed() {
   const gaB = findUser('gaB@slu.edu'.toLowerCase());
   const gaC = findUser('gaC@slu.edu'.toLowerCase());
   const gaD = findUser('gaD@slu.edu'.toLowerCase());
-  const bella = findUser('bott003@slu.edu');
-  const david = findUser('david.pan@slu.edu');
-  const melody = findUser('melody.neimeyer@slu.edu');
-  const jada = findUser('jada.harvey.1@slu.edu');
+  const bella = findUser('bott003@slu.edu'.toLowerCase());
+  const david = findUser('david.g.pan@slu.edu'.toLowerCase());
+  const melody = findUser('melody.neimeyer@slu.edu'.toLowerCase());
+  const jada = findUser('jada.harvey.1@slu.edu'.toLowerCase());
 
   type NewAppointment = InferInsertModel<typeof appointments>;
 
