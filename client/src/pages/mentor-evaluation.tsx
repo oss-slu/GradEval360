@@ -1,6 +1,6 @@
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 
-import MentorEvalForm from '@/components/appointments/mentor-eval-form';
+import ExpectationSettingForm from '@/components/appointments/expectation-setting-form';
 import { authClient } from '@/lib/auth-client';
 
 export default function MentorEvaluationPage() {
@@ -42,7 +42,7 @@ export default function MentorEvaluationPage() {
           </p>
         </div>
 
-        <MentorEvalForm
+        <ExpectationSettingForm
           appointmentId={id}
           onSuccess={() => {
             navigate(`/appointments/${id}`);
