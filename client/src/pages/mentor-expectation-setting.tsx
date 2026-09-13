@@ -3,7 +3,7 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import ExpectationSettingForm from '@/components/appointments/expectation-setting-form';
 import { authClient } from '@/lib/auth-client';
 
-export default function MentorEvaluationPage() {
+export default function MentorExpectationSettingPage() {
   const { id } = useParams();
   const { data: session } = authClient.useSession();
 
@@ -32,10 +32,10 @@ export default function MentorEvaluationPage() {
             <Link to={`/appointments/${id}`} className="hover:underline">
               Appointment details
             </Link>{' '}
-            / Mentor evaluation
+            / Mentor Expectation Setting
           </p>
 
-          <h1 className="text-2xl font-semibold">Mentor Evaluation</h1>
+          <h1 className="text-2xl font-semibold">Mentor Expectation Setting</h1>
 
           <p className="mt-1 text-sm text-muted-foreground">
             Complete the evaluation for this appointment.
