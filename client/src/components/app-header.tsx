@@ -65,7 +65,7 @@ export function AppHeader() {
             <Link to="/profile">
               <Avatar className="h-9 w-9 border shadow-sm cursor-pointer hover:opacity-80 transition">
                 <AvatarImage src={user.image || ""} />
-                <AvatarFallback className="bg-indigo-600 text-white text-xs font-bold">
+                <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
                   {initials}
                 </AvatarFallback>
               </Avatar>

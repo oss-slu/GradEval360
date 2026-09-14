@@ -4,6 +4,39 @@
 
 :root {
   --font-sans: "Inter", ui-sans-serif, system-ui;
+
+  --background: 42 39% 94%;
+  --foreground: 212 100% 17%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 212 100% 17%;
+
+  --primary: 212 100% 17%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 218 100% 32%;
+  --secondary-foreground: 0 0% 100%;
+
+  --muted: 42 39% 94%;
+  --muted-foreground: 212 60% 28%;
+
+  --accent: 42 59% 60%;
+  --accent-foreground: 212 100% 17%;
+
+  --border: 42 20% 82%;
+  --input: 42 20% 82%;
+  --ring: 218 100% 32%;
+
+  --sidebar-background: 0 0% 100%;
+  --sidebar-foreground: 212 100% 17%;
+  --sidebar-primary: 212 100% 17%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 42 59% 60%;
+  --sidebar-accent-foreground: 212 100% 17%;
+  --sidebar-border: 42 20% 82%;
+  --sidebar-ring: 218 100% 32%;
+
+  --radius: 0.5rem;
 }
 
 @layer base {
