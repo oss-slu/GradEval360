@@ -1,6 +1,6 @@
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 
-import ExpectationSettingForm from '@/components/appointments/expectation-setting-form';
+import ExpectationSettingForm from '@/features/appointments/components/ExpectationSettingForm';
 import { authClient } from '@/lib/auth-client';
 
 export default function MentorExpectationSettingPage() {

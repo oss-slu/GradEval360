@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 
-import { AppHeader } from "@/components/app-header";
-import { AppSidebar } from "@/components/app-sidebar";
-import ExpectationReviewForm from "@/components/appointments/expectation-review-form";
-import ExpectationSettingForm from "@/components/appointments/expectation-setting-form";
-import FinalSignOffForm from "@/components/appointments/final-signoff-form";
-import MentorEvalForm from "@/components/appointments/mentor-eval-form";
-import SelfEvalForm from "@/components/appointments/self-eval-form";
+import { AppHeader } from "@/components/AppHeader";
+import { AppSidebar } from "@/components/AppSidebar";
+import ExpectationReviewForm from "@/features/appointments/components/ExpectationReviewForm";
+import ExpectationSettingForm from "@/features/appointments/components/ExpectationSettingForm";
+import FinalSignOffForm from "@/features/appointments/components/FinalSignoffForm";
+import MentorEvalForm from "@/features/appointments/components/MentorEvalForm";
+import SelfEvalForm from "@/features/appointments/components/SelfEvalForm";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { authClient, authFetch } from "@/lib/auth-client";
 import {
@@ -18,7 +18,7 @@ import {
   getAvailableActions,
   STATUS_COPY,
   type AppointmentDetails,
-} from "./appointment-details.logic";
+} from "../appointment-details.logic";
 
 const ratingLabels: Record<string, string> = {
   communication: "Communication",

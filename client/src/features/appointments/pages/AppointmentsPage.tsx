@@ -2,8 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { AppSidebar } from "@/components/app-sidebar";
-import { AppHeader } from "@/components/app-header";
+import { AppSidebar } from "@/components/AppSidebar";
+import { AppHeader } from "@/components/AppHeader";
 import { authClient, authFetch } from "@/lib/auth-client";
 import { useNavigate } from "react-router-dom";
 import {
@@ -16,7 +16,7 @@ import {
   STATUS_METADATA,
   STATUS_FLOW,
   type Appointment,
-} from "./appointments.logic";
+} from "../appointments.logic";
 
 export default function AppointmentsPage() {
   const { data: session } = authClient.useSession();

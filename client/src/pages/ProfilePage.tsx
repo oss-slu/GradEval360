@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Building2, Mail, ShieldCheck, User2, Users2 } from "lucide-react";
 
-import { AppHeader } from "@/components/app-header";
-import { AppSidebar } from "@/components/app-sidebar";
+import { AppHeader } from "@/components/AppHeader";
+import { AppSidebar } from "@/components/AppSidebar";
 import { authFetch } from "@/lib/auth-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";

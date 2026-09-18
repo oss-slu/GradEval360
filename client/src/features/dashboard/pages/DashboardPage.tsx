@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { AppHeader } from "@/components/app-header";
-import { AppSidebar } from "@/components/app-sidebar";
-import { WelcomeBanner } from "@/components/dashboard/welcome-banner";
+import { AppHeader } from "@/components/AppHeader";
+import { AppSidebar } from "@/components/AppSidebar";
+import { WelcomeBanner } from "@/features/dashboard/components/WelcomeBanner";
 import { Button } from "@/components/ui/button";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { authClient, authFetch } from "@/lib/auth-client";
@@ -12,7 +12,7 @@ import {
   getPendingHeading,
   getStatusLabel,
   type SummaryResponse,
-} from "./dashboard.logic";
+} from "../dashboard.logic";
 
 export default function DashboardPage() {
   const { data: session } = authClient.useSession();
