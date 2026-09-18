@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildStatusCards, getPendingHeading, getStatusLabel } from "../../src/pages/dashboard.logic.js";
+import { buildStatusCards, getPendingHeading, getStatusLabel } from "../../src/features/dashboard/dashboard.logic.js";
 
 test("getStatusLabel falls back to the raw status when needed", () => {
   assert.equal(getStatusLabel("AwaitingSignOff"), "Awaiting Sign-Off");

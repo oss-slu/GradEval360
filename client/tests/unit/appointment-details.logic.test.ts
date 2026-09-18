@@ -7,7 +7,7 @@ import {
   formatTimestamp,
   getAppointmentTitle,
   getAvailableActions,
-} from "../../src/pages/appointment-details.logic.js";
+} from "../../src/features/appointments/appointment-details.logic.js";
 
 test("formatTimestamp returns null for missing values and passes through invalid strings", () => {
   assert.equal(formatTimestamp(undefined), null);
