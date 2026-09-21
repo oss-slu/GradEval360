@@ -7,8 +7,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { authFetch } from "@/lib/auth-client";
 
 type ExpectationSettingFormProps = {
-  appointmentId: string | number;
-  onSuccess: () => void;
+  appointmentId?: string | number;
+  onSuccess?: () => void;
 };
 
 export default function ExpectationSettingForm({
@@ -83,6 +83,9 @@ export default function ExpectationSettingForm({
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (!appointmentId) return;
+    
     if (!validate()) return;
     setFieldErrors({});
 
@@ -110,7 +113,7 @@ export default function ExpectationSettingForm({
         title: "Expectations saved",
         description: "The work plan is now ready for GA acknowledgment.",
       });
-      onSuccess();
+      onSuccess?.();
     } catch (error) {
       toast({
         variant: "destructive",
@@ -246,7 +249,7 @@ export default function ExpectationSettingForm({
             Add goal
           </Button>
         )}
-        <Button type="submit" disabled={submitting}>
+        <Button type="submit" disabled={submitting || !appointmentId}>
           {submitting ? "Saving..." : "Save expectations"}
         </Button>
       </div>

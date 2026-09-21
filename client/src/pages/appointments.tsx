@@ -159,12 +159,41 @@ export default function AppointmentsPage() {
           <AppHeader />
           <main className="flex-1 overflow-y-auto bg-slate-50/50 p-8">
             <div className="mx-auto max-w-6xl">
-              <div className="mb-6 flex items-center gap-4">
-                <SidebarTrigger className="md:hidden" />
-                <div>
-                  <h1 className="text-3xl font-bold tracking-tight">Appointments</h1>
-                  <p className="mt-1 text-sm text-muted-foreground">{appointmentCountLabel}</p>
+              <div className="mb-6 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <SidebarTrigger className="md:hidden" />
+
+                  <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Appointments</h1>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {appointmentCountLabel}
+                    </p>
+                  </div>
                 </div>
+
+                {userRole === "Mentor" && (
+                  <select
+                    className="rounded-md border bg-white px-3 py-2 text-sm font-medium text-foreground shadow-sm"
+                    defaultValue=""
+                    onChange={(event) => {
+                      const value = event.target.value;
+
+                      if (value === "expectations") {
+                        navigate("/appointments/new/expectations");
+                      }
+
+                      if (value === "evaluation") {
+                        navigate("/appointments/new/evaluation");
+                      }
+                    }}
+                  >
+                    <option value="" disabled>
+                      Start new appointment
+                    </option>
+                    <option value="expectations">Initial expectation-setting</option>
+                    <option value="evaluation">Final evaluation</option>
+                  </select>
+                )}
               </div>
 
               {loading ? (
