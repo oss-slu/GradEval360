@@ -5,6 +5,7 @@ import { authClient } from '@/lib/auth-client';
 
 export default function MentorExpectationSettingPage() {
   const { id } = useParams();
+  const isNewAppointment = !id;
   const { data: session } = authClient.useSession();
 
   const navigate = useNavigate();
@@ -16,12 +17,31 @@ export default function MentorExpectationSettingPage() {
 
   const userRole = userRoleRaw ? String(userRoleRaw) : null;
 
-  if (!id) {
-    return <Navigate to="/appointments" replace />;
+  if (userRole !== 'Mentor') {
+    return <Navigate to={id ? `/appointments/${id}` : "/appointments"} replace />;
   }
 
-  if (userRole !== 'Mentor') {
-    return <Navigate to={`/appointments/${id}`} replace />;
+  if (isNewAppointment) {
+    return (
+      <div className="min-h-screen bg-slate-50/50 p-8">
+        <div className="mx-auto max-w-5xl space-y-6">
+          <div>
+            <p className="text-sm text-muted-foreground">
+              <Link to="/appointments" className="hover:underline">
+                Appointments
+              </Link>{' '}
+              / New expectation setting
+            </p>
+
+            <h1 className="text-2xl font-semibold">
+              Initial Expectation Setting
+            </h1>
+          </div>
+
+          <ExpectationSettingForm />
+        </div>
+      </div>
+    );
   }
 
   return (
