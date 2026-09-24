@@ -2,6 +2,7 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 
 import ExpectationSettingForm from '@/features/appointments/components/ExpectationSettingForm';
 import { authClient } from '@/lib/auth-client';
+import { getUserRole } from '@/lib/auth-client.logic';
 
 export default function MentorExpectationSettingPage() {
   const { id } = useParams();
@@ -9,12 +10,7 @@ export default function MentorExpectationSettingPage() {
 
   const navigate = useNavigate();
 
-  const userRoleRaw =
-    (session?.user as any)?.role ??
-    (session?.user as any)?.userRole ??
-    (session?.user as any)?.metadata?.role;
-
-  const userRole = userRoleRaw ? String(userRoleRaw) : null;
+  const userRole = getUserRole(session);
 
   if (!id) {
     return <Navigate to="/appointments" replace />;
