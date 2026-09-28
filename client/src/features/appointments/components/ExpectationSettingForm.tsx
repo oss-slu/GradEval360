@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { authFetch } from "@/lib/auth-client";
+import GoalsInput from "./GoalsInput";
 
 type ExpectationSettingFormProps = {
   appointmentId: string | number;
@@ -15,7 +16,7 @@ export default function ExpectationSettingForm({
   appointmentId,
   onSuccess,
 }: ExpectationSettingFormProps) {
-  const [goals, setGoals] = useState<string[]>([""]);
+  const [goals, setGoals] = useState<string[]>([""]); 
   const [responsibilities, setResponsibilities] = useState("");
   const [expectedOutputs, setExpectedOutputs] = useState("");
   const [weeklyHours, setWeeklyHours] = useState("");
@@ -30,22 +31,6 @@ export default function ExpectationSettingForm({
     () => goals.map((goal) => goal.trim()).filter((goal) => goal.length > 0),
     [goals]
   );
-
-  function updateGoal(index: number, value: string) {
-    setGoals((current) => current.map((goal, i) => (i === index ? value : goal)));
-  }
-
-  function addGoal() {
-    if (goals.length >= 5) return;
-    setGoals((current) => [...current, ""]);
-  }
-
-  function removeGoal(index: number) {
-    setGoals((current) => {
-      const next = current.filter((_, i) => i !== index);
-      return next.length > 0 ? next : [""];
-    });
-  }
 
   function validate() {
     const errors: Record<string, string> = {};
@@ -185,37 +170,24 @@ export default function ExpectationSettingForm({
             placeholder="Describe expected outputs or milestones..."
             rows={3}
           />
+
           {fieldErrors.expectedOutputs && (
             <p className="text-xs text-red-600">{fieldErrors.expectedOutputs}</p>
           )}
         </div>
       </div>
 
-      <div className="mt-4 space-y-4">
-        {goals.map((goal, index) => (
-          <div key={index} className="space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-medium">Goal {index + 1}</p>
-              {goals.length > 1 && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => removeGoal(index)}
-                >
-                  Remove
-                </Button>
-              )}
-            </div>
-            <Input
-              value={goal}
-              onChange={(event) => updateGoal(index, event.target.value)}
-              placeholder="Enter a SMART goal"
-              maxLength={200}
-            />
-          </div>
-        ))}
-        {fieldErrors.goals && <p className="text-xs text-red-600">{fieldErrors.goals}</p>}
+      <div className="mt-4">
+        <GoalsInput
+          goals={goals}
+          onChange={setGoals}
+          maxGoals={5}
+          placeholder="Enter a SMART GOAL"
+        />
+
+        {fieldErrors.goals && (
+          <p className="mt-2 text-xs text-red-600">{fieldErrors.goals}</p>
+        )}
       </div>
 
       <div className="mt-4 grid gap-4 md:grid-cols-2">
@@ -241,11 +213,6 @@ export default function ExpectationSettingForm({
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        {goals.length < 5 && (
-          <Button type="button" variant="outline" onClick={addGoal}>
-            Add goal
-          </Button>
-        )}
         <Button type="submit" disabled={submitting}>
           {submitting ? "Saving..." : "Save expectations"}
         </Button>

@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { authFetch } from "@/lib/auth-client";
+import GoalsInput from "./GoalsInput";
 
 type ExpectationReviewFormProps = {
   appointmentId: string | number;
@@ -23,23 +23,7 @@ export default function ExpectationReviewForm({
     () => goals.map((goal) => goal.trim()).filter((goal) => goal.length > 0),
     [goals]
   );
-
-  function updateGoal(index: number, value: string) {
-    setGoals((current) => current.map((goal, i) => (i === index ? value : goal)));
-  }
-
-  function addGoal() {
-    if (goals.length >= 3) return;
-    setGoals((current) => [...current, ""]);
-  }
-
-  function removeGoal(index: number) {
-    setGoals((current) => {
-      const next = current.filter((_, i) => i !== index);
-      return next.length > 0 ? next : [""];
-    });
-  }
-
+ 
   function validateGoals() {
     const errors: Record<string, string> = {};
 
@@ -108,39 +92,15 @@ export default function ExpectationReviewForm({
       </div>
 
       <div className="mt-4 space-y-4">
-        {goals.map((goal, index) => (
-          <div key={index} className="space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-medium">Goal {index + 1}</p>
-              {goals.length > 1 && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => removeGoal(index)}
-                >
-                  Remove
-                </Button>
-              )}
-            </div>
+        <GoalsInput
+          goals={goals}
+          onChange={setGoals}
+          maxGoals={3}
+          placeholder="Ex: Improve communication with my mentor"
+        />
 
-            <Input
-              id={`goal-${appointmentId}-${index}`}
-              value={goal}
-              onChange={(event) => updateGoal(index, event.target.value)}
-              placeholder="Ex: Improve communication with my mentor"
-              maxLength={200}
-            />
-          </div>
-        ))}
-        {fieldErrors.goals && <p className="text-xs text-red-600">{fieldErrors.goals}</p>}
-      </div>
-
-      <div className="mt-4 flex flex-wrap gap-2">
-        {goals.length < 3 && (
-          <Button type="button" variant="outline" onClick={addGoal}>
-            Add goal
-          </Button>
+        {fieldErrors.goals && (
+          <p className="text-xs text-red-600">{fieldErrors.goals}</p>
         )}
 
         <Button type="submit" disabled={submitting}>
