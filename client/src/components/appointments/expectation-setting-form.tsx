@@ -84,25 +84,43 @@ export default function ExpectationSettingForm({
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!appointmentId) return;
-    
     if (!validate()) return;
     setFieldErrors({});
 
     try {
       setSubmitting(true);
-      const response = await authFetch(`/api/appointments/${appointmentId}/expectations/setup`, {
-        method: "PATCH",
-        body: JSON.stringify({
-          goals: trimmedGoals,
-          responsibilities: responsibilities.trim(),
-          expectedOutputs: expectedOutputs.trim(),
-          weeklyHours: Number(weeklyHours),
-          jobCategory: jobCategory.trim(),
-          expectationsMeetingDate: meetingDate.trim(),
-          mentorNotes: mentorNotes.trim() || undefined,
-        }),
-      });
+
+      let currentAppointmentId = appointmentId;
+
+      if (!currentAppointmentId) {
+        const createResponse = await authFetch("/api/appointments", {
+          method: "POST",
+        });
+
+        if (!createResponse.ok) {
+          const errorText = await createResponse.text();
+          throw new Error(errorText || `Request failed with status ${createResponse.status}`);
+        }
+
+        const newAppointment = await createResponse.json();
+        currentAppointmentId = newAppointment.id;
+      }
+
+      const response = await authFetch(
+        `/api/appointments/${currentAppointmentId}/expectations/setup`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({
+            goals: trimmedGoals,
+            responsibilities: responsibilities.trim(),
+            expectedOutputs: expectedOutputs.trim(),
+            weeklyHours: Number(weeklyHours),
+            jobCategory: jobCategory.trim(),
+            expectationsMeetingDate: meetingDate.trim(),
+            mentorNotes: mentorNotes.trim() || undefined,
+          }),
+        }
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -113,6 +131,7 @@ export default function ExpectationSettingForm({
         title: "Expectations saved",
         description: "The work plan is now ready for GA acknowledgment.",
       });
+
       onSuccess?.();
     } catch (error) {
       toast({
@@ -249,7 +268,7 @@ export default function ExpectationSettingForm({
             Add goal
           </Button>
         )}
-        <Button type="submit" disabled={submitting || !appointmentId}>
+        <Button type="submit" disabled={submitting}>
           {submitting ? "Saving..." : "Save expectations"}
         </Button>
       </div>

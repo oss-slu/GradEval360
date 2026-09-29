@@ -1,6 +1,7 @@
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 
 import ExpectationSettingForm from '@/components/appointments/expectation-setting-form';
+import { Button } from '@/components/ui/button';
 import { authClient } from '@/lib/auth-client';
 
 export default function MentorExpectationSettingPage() {
@@ -25,6 +26,14 @@ export default function MentorExpectationSettingPage() {
     return (
       <div className="min-h-screen bg-slate-50/50 p-8">
         <div className="mx-auto max-w-5xl space-y-6">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => navigate("/appointments")}
+          >
+            Back to appointments
+          </Button>
+          
           <div>
             <p className="text-sm text-muted-foreground">
               <Link to="/appointments" className="hover:underline">

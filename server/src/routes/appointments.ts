@@ -126,6 +126,45 @@ router.get("/", requireAuth, async (req: any, res) => {
   }
 });
 
+router.post("/", requireAuth, async (req: any, res) => {
+  try {
+    const user = req.user as RequestUser;
+
+    if (user.role !== "Mentor") {
+      return res.status(403).json({ error: "Only mentors can create appointments" });
+    }
+
+    const [ga] = await db
+      .select()
+      .from(users)
+      .where(eq(users.role, "GA"))
+      .limit(1);
+
+    if (!ga) {
+      return res.status(400).json({ error: "No Graduate Assistant available"});
+    }
+
+    const [newAppointment] = await db
+      .insert(appointments)
+      .values({
+        gaId: ga.id,
+        mentorId: user.id,
+        unitId: user.unitId ?? "UNIT-A",
+        status: APPOINTMENT_STATUS.AWAITING,
+        appointmentCode: generateAppointmentCode(),
+        expectationData: {},
+        selfEvaluationData: {},
+        mentorEvaluationData: {},
+      })
+      .returning();
+
+    return res.status(201).json(newAppointment);
+  } catch (error) {
+    console.error("Error creating appointment:", error);
+    return res.status(500).json({ error: "Server error" });
+  }
+});
+
 router.get("/:id", requireAuth, async (req: any, res) => {
   try {
     const user = req.user as RequestUser;
