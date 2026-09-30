@@ -7,12 +7,17 @@ on:
     branches: [ main, develop ]
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build-and-test:
     if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip ci]')
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+      artifact-metadata: write
     env:
       DATABASE_URL: postgresql://user:password@localhost:5432/gradeval360
       BETTER_AUTH_SECRET: ci_local_better_auth_secret_change_me
@@ -98,3 +103,30 @@ jobs:
 
       - name: Enforce Coverage Thresholds
         run: npm run test:coverage
+
+      - name: Generate Workspace SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: spdx-json
+          output-file: GradEval360-sbom.spdx.json
+          upload-artifact: false
+
+      - name: Upload SBOM Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GradEval360-sbom
+          path: GradEval360-sbom.spdx.json
+          if-no-files-found: error
+
+      - name: Attest SBOM
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/attest@v4
+        with:
+          subject-path: GradEval360-sbom.spdx.json
+
+      - name: Verify SBOM Attestation
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh attestation verify GradEval360-sbom.spdx.json --repo "$GITHUB_REPOSITORY"
