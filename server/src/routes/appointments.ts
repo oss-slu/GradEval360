@@ -152,9 +152,6 @@ router.post("/", requireAuth, async (req: any, res) => {
         unitId: user.unitId ?? "UNIT-A",
         status: APPOINTMENT_STATUS.AWAITING,
         appointmentCode: generateAppointmentCode(),
-        expectationData: {},
-        selfEvaluationData: {},
-        mentorEvaluationData: {},
       })
       .returning();
 
