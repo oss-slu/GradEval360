@@ -32,9 +32,10 @@ This is a **monorepo**, meaning all the code for the website, the server, and th
 ```text
 GradEval360/
 ├── client/             # Frontend (React + Vite)
-│   ├── src/components/ # Reusable UI pieces (Buttons, Inputs, Sidebar)
-│   ├── src/pages/      # Full views (Login, Dashboard, Appointments)
-│   ├── src/lib/        # Client config (Auth client, API fetchers)
+│   ├── src/components/ # Reusable application-wide UI
+│   ├── src/features/   # Feature-specific code
+│   ├── src/pages/      # Application-level pages
+│   ├── src/lib/        # Client config and shared utilities
 │   └── src/hooks/      # Shared React hooks
 ├── server/             # Backend (Express.js)
 │   ├── drizzle/        # Drizzle migrations output

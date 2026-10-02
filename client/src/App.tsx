@@ -1,14 +1,14 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 
-import ProtectedRoute from "@/components/auth/protected-route";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { Toaster } from "@/components/ui/toaster";
 import { authClient } from "@/lib/auth-client";
-import AppointmentDetailsPage from "@/pages/appointment-details";
-import AppointmentsPage from "@/pages/appointments";
-import DashboardPage from "@/pages/dashboard";
-import LoginPage from "@/pages/login";
-import MentorExpectationSettingPage from "@/pages/mentor-expectation-setting";
-import ProfilePage from "@/pages/profile";
+import AppointmentDetailsPage from "@/features/appointments/pages/AppointmentDetailsPage";
+import AppointmentsPage from "@/features/appointments/pages/AppointmentsPage";
+import DashboardPage from "@/features/dashboard/pages/DashboardPage";
+import LoginPage from "@/pages/LoginPage";
+import MentorExpectationSettingPage from "@/features/appointments/pages/MentorExpectationSettingPage";
+import ProfilePage from "@/pages/ProfilePage";
 
 const { useSession } = authClient;
 

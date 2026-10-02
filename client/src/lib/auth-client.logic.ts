@@ -8,4 +8,15 @@ export function resolveAuthFetchInput(input: string | URL | Request) {
   return input;
 }
 
+export function getUserRole(session: unknown): string | null {
+  const user = (session as any)?.user;
+
+  const userRoleRaw =
+    user?.role ??
+    user?.userRole ??
+    user?.metadata?.role;
+
+  return userRoleRaw ? String(userRoleRaw) : null;
+}
+
 export { AUTH_BASE_URL };

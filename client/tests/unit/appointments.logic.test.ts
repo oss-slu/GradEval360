@@ -8,7 +8,7 @@ import {
   getAppointmentTitle,
   getStatusClasses,
   getStatusDisplay,
-} from "../../src/pages/appointments.logic.js";
+} from "../../src//features/appointments/appointments.logic.js";
 import { makeClientAppointment } from "../helpers/appointments.ts";
 
 test("getAppointmentDateInfo prefers final meeting dates over expectation dates", () => {
