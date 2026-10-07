@@ -146,3 +146,25 @@ export const appointments = pgTable('appointments', {
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
+
+export const notifications = pgTable('notifications', {
+  id: uuid('id').primaryKey().defaultRandom(),
+
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id),
+
+  appointmentId: uuid('appointment_id')
+    .notNull()
+    .references(() => appointments.id),
+
+  message: text('message').notNull(),
+
+  read: boolean('read')
+    .notNull()
+    .default(false),
+
+  createdAt: timestamp('created_at')
+    .notNull()
+    .defaultNow(),
+});
