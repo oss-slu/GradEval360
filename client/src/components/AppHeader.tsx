@@ -3,6 +3,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import NotificationBell from "@/features/notifications/components/NotificationBell";
 
 export function AppHeader() {
   const { data: session } = authClient.useSession();
@@ -55,6 +56,8 @@ export function AppHeader() {
       <div className="flex items-center gap-4">
         {user ? (
           <>
+          <NotificationBell />
+          
             <div className="hidden flex-col items-end text-right md:flex">
               <span className="text-sm font-bold leading-none">{user.name}</span>
               <span className="text-[10px] font-medium text-muted-foreground uppercase mt-1">
