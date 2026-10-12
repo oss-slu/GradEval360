@@ -36,16 +36,25 @@ export const GAAcknowledgeExpectationsSchema = z
       .array(z.string().trim().min(5, "Each goal must be at least 5 characters"))
       .min(1, "At least 1 goal is required")
       .max(3, "You can add at most 3 goals"),
+    comments: z.string().trim().optional(),
+  })
+  .strict();
+
+export const MentorFinalizeExpectationsSchema = z
+  .object({
+    endOfYearStartDate: z.string().trim().min(4, "End-of-year start date is required"),
   })
   .strict();
 
 export type ExpectationSettingInput = z.infer<typeof ExpectationSettingSchema>;
 export type MentorExpectationSettingInput = z.infer<typeof MentorExpectationSettingSchema>;
 export type GAAcknowledgeExpectationsInput = z.infer<typeof GAAcknowledgeExpectationsSchema>;
+export type MentorFinalizeExpectationsInput = z.infer<typeof MentorFinalizeExpectationsSchema>;
 
 export const APPOINTMENT_STATUS = {
   AWAITING: 'AwaitingExpectationSetting',
   SET: 'ExpectationSet',
+  AWAITING_MENTOR_FINALIZATION: 'AwaitingMentorFinalization',
   AWAITING_SELF_EVAL: 'AwaitingSelfEvaluation',
   SELF_EVAL_DONE: 'SelfEvaluationCompleted',
   MENTOR_EVAL_DONE: 'MentorEvaluationCompleted',

@@ -56,6 +56,16 @@ test("getAvailableActions exposes the correct action flags for each role", () =>
   assert.deepEqual(getAvailableActions("Mentor", "AwaitingExpectationSetting"), {
     canSetExpectations: true,
     canAcknowledgeExpectations: false,
+    canFinalizeExpectations: false,
+    canSubmitSelfEval: false,
+    canSubmitMentorEval: false,
+    canCompleteSignOff: false,
+  });
+
+  assert.deepEqual(getAvailableActions("Mentor", "AwaitingMentorFinalization"), {
+    canSetExpectations: false,
+    canAcknowledgeExpectations: false,
+    canFinalizeExpectations: true,
     canSubmitSelfEval: false,
     canSubmitMentorEval: false,
     canCompleteSignOff: false,
@@ -64,6 +74,7 @@ test("getAvailableActions exposes the correct action flags for each role", () =>
   assert.deepEqual(getAvailableActions("Admin", "AwaitingSignOff"), {
     canSetExpectations: false,
     canAcknowledgeExpectations: false,
+    canFinalizeExpectations: false,
     canSubmitSelfEval: false,
     canSubmitMentorEval: false,
     canCompleteSignOff: true,

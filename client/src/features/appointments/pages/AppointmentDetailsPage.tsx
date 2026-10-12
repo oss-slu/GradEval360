@@ -6,6 +6,7 @@ import ExpectationReviewForm from "@/features/appointments/components/Expectatio
 import ExpectationSettingForm from "@/features/appointments/components/ExpectationSettingForm";
 import FinalSignOffForm from "@/features/appointments/components/FinalSignoffForm";
 import MentorEvalForm from "@/features/appointments/components/MentorEvalForm";
+import MentorFinalizeExpectationsForm from "@/features/appointments/components/MentorFinalizeExpectationsForm";
 import SelfEvalForm from "@/features/appointments/components/SelfEvalForm";
 import { authClient, authFetch } from "@/lib/auth-client";
 import { getUserRole } from "@/lib/auth-client.logic";
@@ -105,9 +106,25 @@ export default function AppointmentDetailsPage() {
   const statusInfo = appointment?.status ? STATUS_COPY[appointment.status] : null;
   const dateInfo = appointment ? formatDateTime(appointment) : null;
 
+  const endOfYearStartDate = appointment?.expectationData?.endOfYearStartDate;
+
+  const selfEvalIsOpen = (() => {
+    if (!endOfYearStartDate) return false;
+
+    const today = new Date();
+    const localToday = [
+      today.getFullYear(),
+      String(today.getMonth() + 1).padStart(2, "0"),
+      String(today.getDate()).padStart(2, "0"),
+    ].join("-");
+
+    return localToday >= endOfYearStartDate;
+  })();
+
   const {
     canSetExpectations,
     canAcknowledgeExpectations,
+    canFinalizeExpectations,
     canSubmitSelfEval,
     canSubmitMentorEval,
     canCompleteSignOff,
@@ -200,6 +217,7 @@ export default function AppointmentDetailsPage() {
 
               {(canSetExpectations ||
                 canAcknowledgeExpectations ||
+                canFinalizeExpectations ||
                 canSubmitSelfEval ||
                 canSubmitMentorEval ||
                 canCompleteSignOff) && (
@@ -226,13 +244,31 @@ export default function AppointmentDetailsPage() {
                           }}
                         />
                       )}
-                      {canSubmitSelfEval && (
+                      {canFinalizeExpectations && (
+                        <MentorFinalizeExpectationsForm
+                          appointmentId={appointment.id}
+                          gaComments={appointment.expectationData?.gaComments}
+                          onSuccess={() => {
+                            void refreshAppointment({ preserveLoading: true });
+                          }}
+                        />
+                      )}
+                      {canSubmitSelfEval && selfEvalIsOpen && (
                         <SelfEvalForm
                           appointmentId={appointment.id}
                           onSuccess={() => {
                             void refreshAppointment({ preserveLoading: true });
                           }}
                         />
+                      )}
+                      {canSubmitSelfEval && !selfEvalIsOpen && (
+                        <div className="rounded-lg border bg-slate-50 p-4">
+                          <p className="font-medium">Self-evaluation is not available yet.</p>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            The end-of-year workflow will open on{" "}
+                            {endOfYearStartDate ?? "the date selected by your mentor"}.
+                          </p>
+                        </div>
                       )}
                       {canSubmitMentorEval && (
                         <MentorEvalForm
