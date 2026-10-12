@@ -4,6 +4,7 @@ import type {
   FinalSignOffPreparationInput,
   GAAcknowledgeExpectationsInput,
   MentorEvaluationInput,
+  MentorFinalizeExpectationsInput,
   MentorExpectationSettingInput,
 } from "../../../shared/schemas/appointment.js";
 
@@ -28,8 +29,12 @@ export type AppointmentExpectationDraft = {
   mentorNotes?: string;
   mentorAcknowledged?: boolean;
   mentorAcknowledgedAt?: string;
+  mentorFinalized?: boolean;
+  mentorFinalizedAt?: string;
+  endOfYearStartDate?: string;
   gaAcknowledged?: boolean;
   gaAcknowledgedAt?: string;
+  gaComments?: string;
 };
 
 export type AppointmentExpectationData = AppointmentExpectationDraft & {
@@ -130,7 +135,7 @@ export function buildAppointmentSummary(records: AppointmentRecord[]) {
 }
 
 export function buildMentorExpectationUpdate(
-  existingExpectationData: AppointmentExpectationDraft,
+  existingExpectationData: AppointmentExpectationData,
   input: MentorExpectationSettingInput,
   acknowledgedAt: string,
 ): AppointmentExpectationData {
@@ -161,8 +166,22 @@ export function buildGAAcknowledgmentUpdate(
     goals: [...existingMentorGoals, ...input.goals],
     mentorGoals: existingMentorGoals,
     gaGoals: input.goals,
+    gaComments: input.comments,
     gaAcknowledged: true,
     gaAcknowledgedAt: acknowledgedAt,
+  };
+}
+
+export function buildMentorFinalizationUpdate(
+  existingExpectationData: AppointmentExpectationDraft,
+  input: MentorFinalizeExpectationsInput,
+  finalizedAt: string,
+): AppointmentExpectationData {
+  return {
+    ...existingExpectationData,
+    endOfYearStartDate: input.endOfYearStartDate,
+    mentorFinalized: true,
+    mentorFinalizedAt: finalizedAt,
   };
 }
 
