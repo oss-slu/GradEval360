@@ -1,13 +1,13 @@
-import { Router } from "express";
-import { and, count, desc, eq } from "drizzle-orm";
+import { Router } from 'express';
+import { and, count, desc, eq } from 'drizzle-orm';
 
-import { db } from "../db/index.js";
-import { notifications } from "../db/schema.js";
-import { requireAuth } from "../middleware/auth.js";
+import { db } from '../db/index.js';
+import { notifications } from '../db/schema.js';
+import { requireAuth } from '../middleware/auth.js';
 
 const router = Router();
 
-router.get("/unread-count", requireAuth, async (req: any, res) => {
+router.get('/unread-count', requireAuth, async (req: any, res) => {
   try {
     const user = req.user;
 
@@ -17,39 +17,38 @@ router.get("/unread-count", requireAuth, async (req: any, res) => {
       })
       .from(notifications)
       .where(
-        and(
-          eq(notifications.userId, user.id),
-          eq(notifications.read, false),
-        ),
+        and(eq(notifications.userId, user.id), eq(notifications.read, false))
       );
 
     return res.json({
       unreadCount: result.unreadCount,
     });
   } catch (error) {
-    console.error("Error fetching unread notification count:", error);
-    return res.status(500).json({ error: "Server error" });
+    console.error('Error fetching unread notification count:', error);
+    return res.status(500).json({ error: 'Server error' });
   }
 });
 
-router.get("/", requireAuth, async (req: any, res) => {
+router.get('/', requireAuth, async (req: any, res) => {
   try {
     const user = req.user;
 
     const result = await db
       .select()
       .from(notifications)
-      .where(eq(notifications.userId, user.id))
+      .where(
+        and(eq(notifications.userId, user.id), eq(notifications.read, false))
+      )
       .orderBy(desc(notifications.createdAt));
 
     return res.json(result);
   } catch (error) {
-    console.error("Error fetching notifications:", error);
-    return res.status(500).json({ error: "Server error" });
+    console.error('Error fetching notifications:', error);
+    return res.status(500).json({ error: 'Server error' });
   }
 });
 
-router.patch("/:id/read", requireAuth, async (req: any, res) => {
+router.patch('/:id/read', requireAuth, async (req: any, res) => {
   try {
     const user = req.user;
     const notificationId = req.params.id;
@@ -60,12 +59,12 @@ router.patch("/:id/read", requireAuth, async (req: any, res) => {
       .where(
         and(
           eq(notifications.id, notificationId),
-          eq(notifications.userId, user.id),
-        ),
+          eq(notifications.userId, user.id)
+        )
       );
 
     if (!notification) {
-      return res.status(404).json({ error: "Notification not found" });
+      return res.status(404).json({ error: 'Notification not found' });
     }
 
     const [updatedNotification] = await db
@@ -74,19 +73,19 @@ router.patch("/:id/read", requireAuth, async (req: any, res) => {
       .where(
         and(
           eq(notifications.id, notificationId),
-          eq(notifications.userId, user.id),
-        ),
+          eq(notifications.userId, user.id)
+        )
       )
       .returning();
 
     return res.json(updatedNotification);
   } catch (error) {
-    console.error("Error marking notification as read:", error);
-    return res.status(500).json({ error: "Server error" });
+    console.error('Error marking notification as read:', error);
+    return res.status(500).json({ error: 'Server error' });
   }
 });
 
-router.patch("/read-all", requireAuth, async (req: any, res) => {
+router.patch('/read-all', requireAuth, async (req: any, res) => {
   try {
     const user = req.user;
 
@@ -95,10 +94,10 @@ router.patch("/read-all", requireAuth, async (req: any, res) => {
       .set({ read: true })
       .where(eq(notifications.userId, user.id));
 
-    return res.json({ message: "All notifications marked as read" });
+    return res.json({ message: 'All notifications marked as read' });
   } catch (error) {
-    console.error("Error marking notifications as read:", error);
-    return res.status(500).json({ error: "Server error" });
+    console.error('Error marking notifications as read:', error);
+    return res.status(500).json({ error: 'Server error' });
   }
 });
 

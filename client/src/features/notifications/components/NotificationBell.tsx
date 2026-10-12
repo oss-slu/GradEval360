@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
-import { Bell } from "lucide-react";
+import { useEffect, useState } from 'react';
+import { Bell } from 'lucide-react';
 
-import { authFetch } from "@/lib/auth-client";
+import { authFetch } from '@/lib/auth-client';
 
 type AppNotification = {
   id: string;
@@ -20,8 +20,8 @@ export function NotificationBell() {
   useEffect(() => {
     async function loadUnreadCount() {
       try {
-        const response = await authFetch("/api/notifications/unread-count", {
-          method: "GET",
+        const response = await authFetch('/api/notifications/unread-count', {
+          method: 'GET',
         });
 
         if (!response.ok) {
@@ -33,7 +33,7 @@ export function NotificationBell() {
         const data = await response.json();
         setUnreadCount(data.unreadCount);
       } catch (error) {
-        console.error("Error loading notification count:", error);
+        console.error('Error loading notification count:', error);
       }
     }
 
@@ -51,8 +51,8 @@ export function NotificationBell() {
 
           if (!isOpen) {
             try {
-              const response = await authFetch("/api/notifications", {
-                method: "GET",
+              const response = await authFetch('/api/notifications', {
+                method: 'GET',
               });
 
               if (!response.ok) {
@@ -64,7 +64,7 @@ export function NotificationBell() {
               const data = await response.json();
               setNotifications(data);
             } catch (error) {
-              console.error("Error loading notifications:", error);
+              console.error('Error loading notifications:', error);
             }
           }
         }}
@@ -90,9 +90,9 @@ export function NotificationBell() {
                 onClick={async () => {
                   try {
                     const response = await authFetch(
-                      "/api/notifications/read-all",
+                      '/api/notifications/read-all',
                       {
-                        method: "PATCH",
+                        method: 'PATCH',
                       }
                     );
 
@@ -112,7 +112,7 @@ export function NotificationBell() {
                     setUnreadCount(0);
                   } catch (error) {
                     console.error(
-                      "Error marking all notifications as read:",
+                      'Error marking all notifications as read:',
                       error
                     );
                   }
@@ -134,39 +134,37 @@ export function NotificationBell() {
                   key={notification.id}
                   type="button"
                   className={`w-full border-b p-4 text-left last:border-b-0 hover:bg-muted ${
-                    !notification.read ? "bg-muted/50" : ""
+                    !notification.read ? 'bg-muted/50' : ''
                   }`}
                   onClick={async () => {
-                    if (notification.read) {
-                      return;
-                    }
-
                     try {
-                      const response = await authFetch(
-                        `/api/notifications/${notification.id}/read`,
-                        {
-                          method: "PATCH",
-                        }
-                      );
+                      if (!notification.read) {
+                        const response = await authFetch(
+                          `/api/notifications/${notification.id}/read`,
+                          {
+                            method: 'PATCH',
+                          }
+                        );
 
-                      if (!response.ok) {
-                        throw new Error(
-                          `Failed to mark notification as read (${response.status})`
+                        if (!response.ok) {
+                          throw new Error(
+                            `Failed to mark notification as read (${response.status})`
+                          );
+                        }
+
+                        setUnreadCount((currentCount) =>
+                          Math.max(0, currentCount - 1)
                         );
                       }
 
                       setNotifications((currentNotifications) =>
                         currentNotifications.filter(
-                            (item) => item.id !== notification.id,
-                        ),
-                        );
-
-                        setUnreadCount((currentCount) =>
-                        Math.max(0, currentCount - 1),
-                        );
+                          (item) => item.id !== notification.id
+                        )
+                      );
                     } catch (error) {
                       console.error(
-                        "Error marking notification as read:",
+                        'Error marking notification as read:',
                         error
                       );
                     }
