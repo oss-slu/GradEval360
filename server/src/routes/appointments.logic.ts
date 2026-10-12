@@ -135,7 +135,7 @@ export function buildAppointmentSummary(records: AppointmentRecord[]) {
 }
 
 export function buildMentorExpectationUpdate(
-  existingExpectationData: AppointmentExpectationData,
+  existingExpectationData: AppointmentExpectationDraft,
   input: MentorExpectationSettingInput,
   acknowledgedAt: string,
 ): AppointmentExpectationData {
@@ -173,7 +173,7 @@ export function buildGAAcknowledgmentUpdate(
 }
 
 export function buildMentorFinalizationUpdate(
-  existingExpectationData: AppointmentExpectationDraft,
+  existingExpectationData: AppointmentExpectationData,
   input: MentorFinalizeExpectationsInput,
   finalizedAt: string,
 ): AppointmentExpectationData {

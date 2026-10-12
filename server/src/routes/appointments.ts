@@ -403,10 +403,15 @@ router.post("/:id/self-eval", requireAuth, async (req: any, res) => {
       });
     }
 
-    const startDate = new Date(expectationData.endOfYearStartDate);
-    const now = new Date();
+    const today = new Date();
 
-    if (now < startDate) {
+    const localToday = [
+      today.getFullYear(),
+      String(today.getMonth() + 1).padStart(2, "0"),
+      String(today.getDate()).padStart(2, "0"),
+    ].join("-");
+
+    if (localToday < expectationData.endOfYearStartDate) {
       return res.status(403).json({
         error: "Self-evaluation is not available yet",
       });
