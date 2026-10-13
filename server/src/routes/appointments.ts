@@ -1,10 +1,11 @@
 import { Router } from "express";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, entityKind, eq, inArray } from "drizzle-orm";
 
 import { db } from "../db/index.js";
 import { appointments, users } from "../db/schema.js";
 import { requireAuth } from "../middleware/auth.js";
 import { generateAppointmentCode } from "../lib/appointment-code.js";
+import { createNotification } from "src/lib/notifications.js";
 import {
   APPOINTMENT_STATUS,
   FinalAcknowledgmentSchema,
@@ -205,6 +206,18 @@ router.patch("/:id/expectations/setup", requireAuth, async (req: any, res) => {
       })
       .where(eq(appointments.id, appointmentId))
       .returning();
+    
+    await createNotification(
+      appointment.gaId,
+      appointmentId,
+      "Your mentor has set your expectations.",
+    );
+
+    await createNotification(
+      appointment.mentorId,
+      appointmentId,
+      "You have successfully set expectations for your graduate assistant.",
+    );
 
     return res.json(updatedAppointment);
   } catch (error) {
@@ -267,6 +280,18 @@ router.patch("/:id/expectations", requireAuth, async (req: any, res) => {
       .where(eq(appointments.id, appointmentId))
       .returning();
 
+    await createNotification(
+      appointment.mentorId,
+      appointmentId,
+      "Your graduate assistant has acknowledged their expectations.",
+    ); 
+
+    await createNotification(
+      appointment.gaId,
+      appointmentId,
+      "You have successfully acknowledged your expectations.",
+    );
+
     return res.json(updatedAppointment);
   } catch (error) {
     console.error("Error acknowledging expectations:", error);
@@ -289,7 +314,7 @@ router.post("/:id/self-eval", requireAuth, async (req: any, res) => {
     }
 
     const [appointment] = await db
-      .select({ status: appointments.status, gaId: appointments.gaId })
+      .select({ status: appointments.status, gaId: appointments.gaId, mentorId: appointments.mentorId })
       .from(appointments)
       .where(eq(appointments.id, id));
 
@@ -314,6 +339,18 @@ router.post("/:id/self-eval", requireAuth, async (req: any, res) => {
         status: APPOINTMENT_STATUS.SELF_EVAL_DONE,
       })
       .where(eq(appointments.id, id));
+    
+    await createNotification(
+      appointment.mentorId,
+      id,
+      "Your graduate assistant has submitted their self-evaluation.",
+    );
+
+    await createNotification(
+      appointment.gaId,
+      id,
+      "You have succesfully submitted your self-evaluation",
+    );
 
     return res.json({ message: "Self-evaluation submitted successfully" });
   } catch (error) {
@@ -375,6 +412,18 @@ router.post("/:id/mentor-evaluation", requireAuth, async (req: any, res) => {
       .where(eq(appointments.id, appointmentId))
       .returning();
 
+    await createNotification(
+      appointment.gaId,
+      appointmentId,
+      "Your mentor has submitted your evaluation.",
+    );
+
+    await createNotification(
+      appointment.mentorId,
+      appointmentId,
+      "You have successfully submitted your evaluation.",
+    );
+
     return res.json(updatedAppointment);
   } catch (error) {
     console.error("Error submitting mentor evaluation:", error);
@@ -434,6 +483,18 @@ router.post("/:id/final-signoff", requireAuth, async (req: any, res) => {
         .where(eq(appointments.id, appointmentId))
         .returning();
 
+      await createNotification(
+        appointment.gaId,
+        appointmentId,
+        "Your appointment is ready for sign-off.",
+      );
+
+      await createNotification(
+        appointment.mentorId,
+        appointmentId,
+        "Your appointment is ready for sign-off.",
+      );
+
       return res.json(updatedAppointment);
     }
 
@@ -461,6 +522,18 @@ router.post("/:id/final-signoff", requireAuth, async (req: any, res) => {
         })
         .where(eq(appointments.id, appointmentId))
         .returning();
+      
+      await createNotification(
+        appointment.gaId,
+        appointmentId,
+        "Your appointment has been finalized.",
+      );
+
+      await createNotification(
+        appointment.mentorId,
+        appointmentId,
+        "Your appointment has been finalized.",
+      );
 
       return res.json(updatedAppointment);
     }
