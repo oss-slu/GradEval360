@@ -38,6 +38,7 @@ function AppRoutes() {
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/appointments" element={<AppointmentsPage />} />
+        <Route path="/appointments/new/expectations" element={<MentorExpectationSettingPage />} />
         <Route path="/appointments/:id" element={<AppointmentDetailsPage />} />
         <Route path="/appointments/:id/evaluation" element={<MentorExpectationSettingPage />} />
         <Route path="/profile" element={<ProfilePage />} />
