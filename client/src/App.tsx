@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { authClient } from "@/lib/auth-client";
 import AppointmentDetailsPage from "@/features/appointments/pages/AppointmentDetailsPage";
 import AppointmentsPage from "@/features/appointments/pages/AppointmentsPage";
+import AuditLogsPage from "@/features/audit/pages/AuditLogsPage";
 import DashboardPage from "@/features/dashboard/pages/DashboardPage";
 import LoginPage from "@/pages/LoginPage";
 import MentorExpectationSettingPage from "@/features/appointments/pages/MentorExpectationSettingPage";
@@ -42,6 +43,7 @@ function AppRoutes() {
         <Route path="/appointments/:id" element={<AppointmentDetailsPage />} />
         <Route path="/appointments/:id/evaluation" element={<MentorExpectationSettingPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/admin/audit-logs" element={<AuditLogsPage />} />
       </Route>
       <Route path="*" element={<Navigate to={isAuthed ? "/dashboard" : "/login"} replace />} />
     </Routes>

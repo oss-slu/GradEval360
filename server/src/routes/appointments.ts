@@ -6,6 +6,7 @@ import { appointments, users } from "../db/schema.js";
 import { requireAuth } from "../middleware/auth.js";
 import { generateAppointmentCode } from "../lib/appointment-code.js";
 import { createNotification } from "src/lib/notifications.js";
+import { recordAuditLog } from "../lib/audit.js";
 import {
   APPOINTMENT_STATUS,
   FinalAcknowledgmentSchema,
@@ -15,6 +16,7 @@ import {
   MentorExpectationSettingSchema,
   SelfEvaluationSchema,
 } from "../../../shared/schemas/appointment.js";
+import { AUDIT_ACTIONS } from "./audit-logs.logic.js";
 import {
   buildAppointmentSummary,
   buildFinalAcknowledgmentUpdate,
@@ -156,6 +158,13 @@ router.post("/", requireAuth, async (req: any, res) => {
       })
       .returning();
 
+    await recordAuditLog({
+      actor: user,
+      action: AUDIT_ACTIONS.APPOINTMENT_CREATED,
+      appointmentId: newAppointment.id,
+      gaId: ga.id,
+    });
+
     return res.status(201).json(newAppointment);
   } catch (error) {
     console.error("Error creating appointment:", error);
@@ -255,6 +264,13 @@ router.patch("/:id/expectations/setup", requireAuth, async (req: any, res) => {
       "You have successfully set expectations for your graduate assistant.",
     );
 
+    await recordAuditLog({
+      actor: user,
+      action: AUDIT_ACTIONS.EXPECTATIONS_SET,
+      appointmentId,
+      gaId: appointment.gaId,
+    });
+
     return res.json(updatedAppointment);
   } catch (error) {
     console.error("Error setting expectations:", error);
@@ -328,6 +344,13 @@ router.patch("/:id/expectations", requireAuth, async (req: any, res) => {
       "You have successfully acknowledged your expectations.",
     );
 
+    await recordAuditLog({
+      actor: user,
+      action: AUDIT_ACTIONS.EXPECTATIONS_ACKNOWLEDGED,
+      appointmentId,
+      gaId: appointment.gaId,
+    });
+
     return res.json(updatedAppointment);
   } catch (error) {
     console.error("Error acknowledging expectations:", error);
@@ -387,6 +410,13 @@ router.post("/:id/self-eval", requireAuth, async (req: any, res) => {
       id,
       "You have succesfully submitted your self-evaluation",
     );
+
+    await recordAuditLog({
+      actor: user,
+      action: AUDIT_ACTIONS.SELF_EVALUATION_SUBMITTED,
+      appointmentId: id,
+      gaId: appointment.gaId,
+    });
 
     return res.json({ message: "Self-evaluation submitted successfully" });
   } catch (error) {
@@ -460,6 +490,13 @@ router.post("/:id/mentor-evaluation", requireAuth, async (req: any, res) => {
       "You have successfully submitted your evaluation.",
     );
 
+    await recordAuditLog({
+      actor: user,
+      action: AUDIT_ACTIONS.MENTOR_EVALUATION_SUBMITTED,
+      appointmentId,
+      gaId: appointment.gaId,
+    });
+
     return res.json(updatedAppointment);
   } catch (error) {
     console.error("Error submitting mentor evaluation:", error);
@@ -531,6 +568,13 @@ router.post("/:id/final-signoff", requireAuth, async (req: any, res) => {
         "Your appointment is ready for sign-off.",
       );
 
+      await recordAuditLog({
+        actor: user,
+        action: AUDIT_ACTIONS.SIGN_OFF_PREPARED,
+        appointmentId,
+        gaId: appointment.gaId,
+      });
+
       return res.json(updatedAppointment);
     }
 
@@ -570,6 +614,13 @@ router.post("/:id/final-signoff", requireAuth, async (req: any, res) => {
         appointmentId,
         "Your appointment has been finalized.",
       );
+
+      await recordAuditLog({
+        actor: user,
+        action: AUDIT_ACTIONS.FINAL_SIGN_OFF,
+        appointmentId,
+        gaId: appointment.gaId,
+      });
 
       return res.json(updatedAppointment);
     }
