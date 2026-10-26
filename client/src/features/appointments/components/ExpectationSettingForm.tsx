@@ -8,8 +8,8 @@ import { authFetch } from "@/lib/auth-client";
 import GoalsInput from "./GoalsInput";
 
 type ExpectationSettingFormProps = {
-  appointmentId: string | number;
-  onSuccess: () => void;
+  appointmentId?: string | number;
+  onSuccess?: () => void;
 };
 
 export default function ExpectationSettingForm({
@@ -68,23 +68,44 @@ export default function ExpectationSettingForm({
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
     if (!validate()) return;
     setFieldErrors({});
 
     try {
       setSubmitting(true);
-      const response = await authFetch(`/api/appointments/${appointmentId}/expectations/setup`, {
-        method: "PATCH",
-        body: JSON.stringify({
-          goals: trimmedGoals,
-          responsibilities: responsibilities.trim(),
-          expectedOutputs: expectedOutputs.trim(),
-          weeklyHours: Number(weeklyHours),
-          jobCategory: jobCategory.trim(),
-          expectationsMeetingDate: meetingDate.trim(),
-          mentorNotes: mentorNotes.trim() || undefined,
-        }),
-      });
+
+      let currentAppointmentId = appointmentId;
+
+      if (!currentAppointmentId) {
+        const createResponse = await authFetch("/api/appointments", {
+          method: "POST",
+        });
+
+        if (!createResponse.ok) {
+          const errorText = await createResponse.text();
+          throw new Error(errorText || `Request failed with status ${createResponse.status}`);
+        }
+
+        const newAppointment = await createResponse.json();
+        currentAppointmentId = newAppointment.id;
+      }
+
+      const response = await authFetch(
+        `/api/appointments/${currentAppointmentId}/expectations/setup`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({
+            goals: trimmedGoals,
+            responsibilities: responsibilities.trim(),
+            expectedOutputs: expectedOutputs.trim(),
+            weeklyHours: Number(weeklyHours),
+            jobCategory: jobCategory.trim(),
+            expectationsMeetingDate: meetingDate.trim(),
+            mentorNotes: mentorNotes.trim() || undefined,
+          }),
+        }
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -95,7 +116,8 @@ export default function ExpectationSettingForm({
         title: "Expectations saved",
         description: "The work plan is now ready for GA acknowledgment.",
       });
-      onSuccess();
+
+      onSuccess?.();
     } catch (error) {
       toast({
         variant: "destructive",
