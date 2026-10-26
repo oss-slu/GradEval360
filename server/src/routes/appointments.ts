@@ -13,6 +13,7 @@ import {
   GAAcknowledgeExpectationsSchema,
   MentorEvaluationSchema,
   MentorExpectationSettingSchema,
+  MentorFinalizeExpectationsSchema,
   SelfEvaluationSchema,
 } from "../../../shared/schemas/appointment.js";
 import {
@@ -22,10 +23,12 @@ import {
   buildGAAcknowledgmentUpdate,
   buildMentorEvaluationUpdate,
   buildMentorExpectationUpdate,
+  buildMentorFinalizationUpdate,
   canAccessAppointment,
   getActorName,
   type AppointmentExpectationDraft,
   type AppointmentMentorEvaluationData,
+  type AppointmentExpectationData,
   type RequestUser,
 } from "./appointments.logic.js";
 
@@ -279,7 +282,7 @@ router.patch("/:id/expectations", requireAuth, async (req: any, res) => {
       });
     }
 
-    const { goals } = parsed.data;
+    const { goals, comments } = parsed.data;
 
     const [appointment] = await db
       .select()
@@ -303,7 +306,7 @@ router.patch("/:id/expectations", requireAuth, async (req: any, res) => {
 
     const updatedExpectationData = buildGAAcknowledgmentUpdate(
       existingExpectationData,
-      { goals },
+      { goals, comments },
       new Date().toISOString(),
     );
 
@@ -311,7 +314,7 @@ router.patch("/:id/expectations", requireAuth, async (req: any, res) => {
       .update(appointments)
       .set({
         expectationData: updatedExpectationData,
-        status: APPOINTMENT_STATUS.AWAITING_SELF_EVAL,
+        status: APPOINTMENT_STATUS.AWAITING_MENTOR_FINALIZATION,
       })
       .where(eq(appointments.id, appointmentId))
       .returning();
@@ -335,6 +338,87 @@ router.patch("/:id/expectations", requireAuth, async (req: any, res) => {
   }
 });
 
+router.patch("/:id/expectations/finalize", requireAuth, async (req: any, res) => {
+  try {
+    const user = req.user as RequestUser;
+    const appointmentId = req.params.id;
+
+    if (user.role !== "Mentor") {
+      return res.status(403).json({
+        error: "Only mentors can finalize expectations",
+      });
+    }
+
+    const parsed = MentorFinalizeExpectationsSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: "Invalid request payload",
+        details: parsed.error.flatten(),
+      });
+    }
+
+    const [appointment] = await db
+      .select()
+      .from(appointments)
+      .where(
+        and(
+          eq(appointments.id, appointmentId),
+          eq(appointments.mentorId, user.id),
+        ),
+      );
+
+    if (!appointment) {
+      return res.status(404).json({
+        error: "Appointment not found",
+      });
+    }
+
+    if (
+      appointment.status !==
+      APPOINTMENT_STATUS.AWAITING_MENTOR_FINALIZATION
+    ) {
+      return res.status(400).json({
+        error: `Appointment must be in ${APPOINTMENT_STATUS.AWAITING_MENTOR_FINALIZATION} status to finalize expectations`,
+      });
+    }
+
+    const existingExpectationData =
+      appointment.expectationData &&
+      typeof appointment.expectationData === "object"
+        ? (appointment.expectationData as AppointmentExpectationData)
+        : null;
+
+    if (!existingExpectationData) {
+      return res.status(400).json({
+        error: "Expectation data is missing",
+      });
+    }
+
+    const updatedExpectationData = buildMentorFinalizationUpdate(
+      existingExpectationData,
+      parsed.data,
+      new Date().toISOString(),
+    );
+
+    const [updatedAppointment] = await db
+      .update(appointments)
+      .set({
+        expectationData: updatedExpectationData,
+        status: APPOINTMENT_STATUS.AWAITING_SELF_EVAL,
+      })
+      .where(eq(appointments.id, appointmentId))
+      .returning();
+
+    return res.json(updatedAppointment);
+  } catch (error) {
+    console.error("Error finalizing expectations:", error);
+    return res.status(500).json({
+      error: "Server error",
+    });
+  }
+});
+
 router.post("/:id/self-eval", requireAuth, async (req: any, res) => {
   try {
     const user = req.user as RequestUser;
@@ -350,7 +434,7 @@ router.post("/:id/self-eval", requireAuth, async (req: any, res) => {
     }
 
     const [appointment] = await db
-      .select({ status: appointments.status, gaId: appointments.gaId, mentorId: appointments.mentorId })
+      .select({ status: appointments.status, gaId: appointments.gaId, mentorId: appointments.mentorId, expectationData: appointments.expectationData })
       .from(appointments)
       .where(eq(appointments.id, id));
 
@@ -365,6 +449,32 @@ router.post("/:id/self-eval", requireAuth, async (req: any, res) => {
     if (appointment.status !== APPOINTMENT_STATUS.AWAITING_SELF_EVAL) {
       return res.status(400).json({
         error: `Appointment must be in ${APPOINTMENT_STATUS.AWAITING_SELF_EVAL} status to submit self-evaluation`,
+      });
+    }
+
+    const expectationData =
+      appointment.expectationData &&
+      typeof appointment.expectationData === "object"
+        ? (appointment.expectationData as AppointmentExpectationDraft)
+        : null;
+
+    if (!expectationData?.endOfYearStartDate) {
+      return res.status(400).json({
+        error: "End-of-year start date has not been set",
+      });
+    }
+
+    const today = new Date();
+
+    const localToday = [
+      today.getFullYear(),
+      String(today.getMonth() + 1).padStart(2, "0"),
+      String(today.getDate()).padStart(2, "0"),
+    ].join("-");
+
+    if (localToday < expectationData.endOfYearStartDate) {
+      return res.status(403).json({
+        error: "Self-evaluation is not available yet",
       });
     }
 

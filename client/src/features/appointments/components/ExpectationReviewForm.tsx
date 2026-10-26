@@ -15,6 +15,7 @@ export default function ExpectationReviewForm({
   onSuccess,
 }: ExpectationReviewFormProps) {
   const [goals, setGoals] = useState<string[]>([""]);
+  const [comments, setComments] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
@@ -49,7 +50,8 @@ export default function ExpectationReviewForm({
       const response = await authFetch(`/api/appointments/${appointmentId}/expectations`, {
         method: "PATCH",
         body: JSON.stringify({
-          goals: trimmedGoals,
+          goals: trimmedGoals, 
+          comments,
         }),
       });
 
@@ -60,7 +62,7 @@ export default function ExpectationReviewForm({
 
       toast({
         title: "Expectations acknowledged",
-        description: "Your goals were saved successfully.",
+        description: "Your goals and comments were saved successfully.",
       });
       onSuccess();
     } catch (error) {
@@ -102,6 +104,16 @@ export default function ExpectationReviewForm({
         {fieldErrors.goals && (
           <p className="text-xs text-red-600">{fieldErrors.goals}</p>
         )}
+
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Comments</p>
+          <textarea
+            value={comments}
+            onChange={(event) => setComments(event.target.value)}
+            placeholder="Add any comments for your mentor..."
+            className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          />
+        </div>
 
         <Button type="submit" disabled={submitting}>
           {submitting ? "Submitting..." : "Acknowledge expectations"}
