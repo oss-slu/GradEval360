@@ -434,7 +434,7 @@ router.post("/:id/self-eval", requireAuth, async (req: any, res) => {
     }
 
     const [appointment] = await db
-      .select({ status: appointments.status, gaId: appointments.gaId, expectationData: appointments.expectationData })
+      .select({ status: appointments.status, gaId: appointments.gaId, mentorId: appointments.mentorId, expectationData: appointments.expectationData })
       .from(appointments)
       .where(eq(appointments.id, id));
 
