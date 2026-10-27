@@ -105,6 +105,7 @@ describe('Appointment status workflow', () => {
     assert.deepEqual(APPOINTMENT_STATUS, {
       AWAITING: 'AwaitingExpectationSetting',
       SET: 'ExpectationSet',
+      AWAITING_MENTOR_FINALIZATION: "AwaitingMentorFinalization",
       AWAITING_SELF_EVAL: 'AwaitingSelfEvaluation',
       SELF_EVAL_DONE: 'SelfEvaluationCompleted',
       MENTOR_EVAL_DONE: 'MentorEvaluationCompleted',

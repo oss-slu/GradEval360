@@ -6,6 +6,7 @@ import { UserRoleEnum } from "../../../shared/src/types";
 export const statusEnum = pgEnum('status', [
   'AwaitingExpectationSetting', 
   'ExpectationSet', 
+  'AwaitingMentorFinalization',
   'AwaitingSelfEvaluation',
   'SelfEvaluationCompleted',
   'MentorEvaluationCompleted',
@@ -17,6 +18,7 @@ interface Expectation {
   goals: string[];
   mentorGoals?: string[];
   gaGoals?: string[];
+  gaComments?: string;
   weeklyHours?: number;
   jobCategory?: string;
   expectedOutputs?: string;
@@ -27,6 +29,9 @@ interface Expectation {
   mentorAcknowledgedAt?: string;
   gaAcknowledged?: boolean;
   gaAcknowledgedAt?: string;
+  mentorFinalized?: boolean;
+  mentorFinalizedAt?: string;
+  endOfYearStartDate?: string;
 }
 
 interface SelfEvaluation {

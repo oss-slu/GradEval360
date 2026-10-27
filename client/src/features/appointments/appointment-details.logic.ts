@@ -20,6 +20,7 @@ export type AppointmentDetails = {
     goals?: string[];
     mentorGoals?: string[];
     gaGoals?: string[];
+    gaComments?: string;
     weeklyHours?: number;
     responsibilities?: string;
     jobCategory?: string;
@@ -30,6 +31,9 @@ export type AppointmentDetails = {
     mentorAcknowledgedAt?: string;
     gaAcknowledged?: boolean;
     gaAcknowledgedAt?: string;
+    mentorFinalized?: boolean;
+    mentorFinalizedAt?: string;
+    endOfYearStartDate?: string;
   };
   selfEvaluationData?: {
     goalProgress?: string;
@@ -71,6 +75,11 @@ export const STATUS_COPY: Record<
     label: "Expectation set",
     owner: "GA",
     helper: "GA should review the plan and acknowledge expectations.",
+  },
+  AwaitingMentorFinalization: {
+    label: "Awaiting mentor finalization",
+    owner: "Mentor",
+    helper: "Mentor should review the GA response, finalize expectations, and set the end-of-year start date.",
   },
   AwaitingSelfEvaluation: {
     label: "Awaiting self-evaluation",
@@ -194,6 +203,7 @@ export function getAvailableActions(
   return {
     canSetExpectations: userRole === "Mentor" && status === "AwaitingExpectationSetting",
     canAcknowledgeExpectations: userRole === "GA" && status === "ExpectationSet",
+    canFinalizeExpectations: userRole === "Mentor" && status === "AwaitingMentorFinalization",
     canSubmitSelfEval: userRole === "GA" && status === "AwaitingSelfEvaluation",
     canSubmitMentorEval: userRole === "Mentor" && status === "SelfEvaluationCompleted",
     canCompleteSignOff:

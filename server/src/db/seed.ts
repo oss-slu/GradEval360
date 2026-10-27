@@ -13,7 +13,7 @@ async function seed() {
     { email: 'gaB@slu.edu', fullName: 'GA B', role: 'GA' as const, unitId: null },
     { email: 'gaC@slu.edu', fullName: 'GA C', role: 'GA' as const, unitId: null },
     { email: 'gaD@slu.edu', fullName: 'GA D', role: 'GA' as const, unitId: null },
-    { email: 'bott003@slu.edu', fullName: 'Bella Ott', role: 'Admin' as const, unitId: 'UNIT-A' },
+    { email: 'bott003@slu.edu', fullName: 'Bella Ott', role: 'Mentor' as const, unitId: 'UNIT-A' },
     { email: 'david.g.pan@slu.edu', fullName: 'David Pan', role: 'Admin' as const, unitId: 'UNIT-B' },
     { email: 'melody.neimeyer@slu.edu', fullName: 'Melody Neimeyer', role: 'Admin' as const, unitId: 'UNIT-A' },
     { email: 'jada.harvey.1@slu.edu', fullName: 'Jada Harvey', role: 'Admin' as const, unitId: 'UNIT-B' },
