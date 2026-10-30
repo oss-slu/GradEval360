@@ -103,11 +103,34 @@ async function listAppointmentsForUser(user: RequestUser) {
   return [];
 }
 
+function isInCurrentAcademicYear(createdAt: Date | null) {
+  if (!createdAt) {
+    return false;
+  }
+
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+
+  const academicYearStart =
+    currentMonth >= 7 ? currentYear : currentYear - 1;
+
+  const startDate = new Date(academicYearStart, 7, 1);
+  const endDate = new Date(academicYearStart + 1, 7, 1);
+
+  return createdAt >= startDate && createdAt < endDate;
+}
+
 router.get("/summary", requireAuth, async (req: any, res) => {
   try {
     const user = req.user as RequestUser;
     const result = await listAppointmentsForUser(user);
-    const withCodes = await ensureAppointmentCodes(result ?? []);
+
+    const currentAcademicYearAppointments = (result ?? []).filter(
+      (appointment) => isInCurrentAcademicYear(appointment.createdAt)
+    );
+
+    const withCodes = await ensureAppointmentCodes(currentAcademicYearAppointments);
 
     return res.json(buildAppointmentSummary(withCodes));
   } catch (error) {
