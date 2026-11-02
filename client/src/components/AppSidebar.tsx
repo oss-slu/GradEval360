@@ -1,4 +1,4 @@
-import { LayoutDashboard, CalendarDays, UserCircle2, BarChart3 } from "lucide-react";
+import { LayoutDashboard, CalendarDays, UserCircle2, ClipboardList, BarChart3 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { getUserRole } from "@/lib/auth-client.logic";
 import {
@@ -19,16 +19,21 @@ const navItems = [
   { label: "Profile", to: "/profile", icon: UserCircle2 },
 ];
 
+const adminNavItems = [
+  { label: "Audit Logs", to: "/admin/audit-logs", icon: ClipboardList },
+];
+
 export function AppSidebar() {
   const pathname = window.location.pathname;
-
   const { data: session } = authClient.useSession();
   const userRole = getUserRole(session);
 
-  console.log("Sidebar user role:", userRole);
-  console.log("Session user:", session?.user);
+  const items =
+    userRole === "Admin"
+      ? [...navItems, ...adminNavItems]
+      : navItems;
 
-  const visibleNavItems = navItems.filter((item) => {
+  const visibleNavItems = items.filter((item) => {
     if (item.to === "/visualizations") {
       return userRole === "Admin";
     }

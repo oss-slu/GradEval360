@@ -173,3 +173,23 @@ export const notifications = pgTable('notifications', {
     .notNull()
     .defaultNow(),
 });
+export const auditLogs = pgTable('audit_logs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+
+  actorId: uuid('actor_id')
+    .notNull()
+    .references(() => users.id),
+
+  actorRole: roleEnum('actor_role').notNull(),
+
+  action: text('action').notNull(),
+
+  description: text('description').notNull(),
+
+  appointmentId: uuid('appointment_id')
+    .references(() => appointments.id),
+
+  createdAt: timestamp('created_at')
+    .notNull()
+    .defaultNow(),
+});
