@@ -5,7 +5,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { AppSidebar } from "@/components/AppSidebar";
 import { authClient, authFetch } from "@/lib/auth-client";
 import { getUserRole } from "@/lib/auth-client.logic";
-import type { SummaryResponse } from "./dashboard.logic";
+import type { SummaryResponse } from "@/features/dashboard/dashboard.logic";
 
 import {
   SidebarInset,
