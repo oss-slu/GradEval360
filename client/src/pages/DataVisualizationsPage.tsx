@@ -38,6 +38,15 @@ export default function DataVisualizationsPage() {
   const { data: session } = authClient.useSession();
   const userRole = getUserRole(session);
 
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+
+  const academicYearStart = currentMonth >= 7 ? currentYear : currentYear - 1;
+
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState(String(academicYearStart));
+  const [selectedUnit, setSelectedUnit] = useState("all");
+
   const [summary, setSummary] = useState<SummaryResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -48,7 +57,7 @@ export default function DataVisualizationsPage() {
         setLoading(true);
         setError("");
 
-        const response = await authFetch("/api/appointments/summary", {
+        const response = await authFetch(`/api/appointments/summary?academicYear=${selectedAcademicYear}&unitId=${selectedUnit}`, {
           method: "GET",
         });
 
@@ -73,7 +82,7 @@ export default function DataVisualizationsPage() {
     }
 
     loadSummary();
-  }, []);
+  }, [selectedAcademicYear, selectedUnit]);
 
   const chartData = summary
     ? Object.entries(summary.statusCounts).map(([status, count]) => ({
@@ -85,13 +94,6 @@ export default function DataVisualizationsPage() {
   if (userRole !== "Admin") {
     return <Navigate to="/dashboard" replace />;
   }
-
-  const now = new Date();
-  const currentYear = now.getFullYear();
-  const currentMonth = now.getMonth();
-
-  const academicYearStart = currentMonth >= 7 ? currentYear : currentYear - 1;
-  const academicYearLabel = `${academicYearStart}-${academicYearStart + 1}`;
 
   return (
     <SidebarProvider defaultOpen={false}>
@@ -112,9 +114,54 @@ export default function DataVisualizationsPage() {
                   </h1>
 
                   <p className="mt-1 text-sm text-muted-foreground">
-                    View appointment activity for the {academicYearLabel} academic year.
+                    View appointment activity for the {selectedAcademicYear}-{Number(selectedAcademicYear) + 1} academic year.
                   </p>
                 </div>
+              </div>
+
+              <div className="rounded-xl border bg-card p-6 shadow-sm">
+                <label
+                    htmlFor="academic-year"
+                    className="mb-2 block text-sm font-medium"
+                >
+                    Academic Year
+                </label>
+
+                <select
+                    id="academic-year"
+                    value={selectedAcademicYear}
+                    onChange={(event) => setSelectedAcademicYear(event.target.value)}
+                    className="w-full max-w-xs rounded-md border bg-background px-3 py-2 text-sm"
+                >
+                    <option value={String(academicYearStart)}>
+                    {academicYearStart}-{academicYearStart + 1}
+                    </option>
+
+                    <option value={String(academicYearStart - 1)}>
+                    {academicYearStart - 1}-{academicYearStart}
+                    </option>
+
+                    <option value={String(academicYearStart - 2)}>
+                    {academicYearStart - 2}-{academicYearStart - 1}
+                    </option>
+                </select>
+                <label
+                  htmlFor="unit"
+                  className="mb-2 mt-4 block text-sm font-medium"
+                >
+                  Unit
+                </label>
+
+                <select
+                  id="unit"
+                  value={selectedUnit}
+                  onChange={(event) => setSelectedUnit(event.target.value)}
+                  className="w-full max-w-xs rounded-md border bg-background px-3 py-2 text-sm"
+                >
+                  <option value="all">All Units</option>
+                  <option value="UNIT-A">UNIT-A</option>
+                  <option value="UNIT-B">UNIT-B</option>
+                </select>
               </div>
 
               {loading ? (
@@ -174,7 +221,7 @@ export default function DataVisualizationsPage() {
                       </h2>
 
                       <p className="text-sm text-muted-foreground">
-                        {academicYearLabel} Academic Year
+                        {selectedAcademicYear}-{Number(selectedAcademicYear) + 1} Academic Year
                       </p>
                     </div>
 

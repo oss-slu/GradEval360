@@ -103,17 +103,13 @@ async function listAppointmentsForUser(user: RequestUser) {
   return [];
 }
 
-function isInCurrentAcademicYear(createdAt: Date | null) {
+function isInAcademicYear(
+  createdAt: Date | null,
+  academicYearStart: number
+) {
   if (!createdAt) {
     return false;
   }
-
-  const now = new Date();
-  const currentYear = now.getFullYear();
-  const currentMonth = now.getMonth();
-
-  const academicYearStart =
-    currentMonth >= 7 ? currentYear : currentYear - 1;
 
   const startDate = new Date(academicYearStart, 7, 1);
   const endDate = new Date(academicYearStart + 1, 7, 1);
@@ -124,13 +120,37 @@ function isInCurrentAcademicYear(createdAt: Date | null) {
 router.get("/summary", requireAuth, async (req: any, res) => {
   try {
     const user = req.user as RequestUser;
+
+    const now = new Date();
+    const currentAcademicYearStart =
+      now.getMonth() >= 7
+        ? now.getFullYear()
+        : now.getFullYear() - 1;
+
+    const parsedAcademicYear = Number(req.query.academicYear);
+
+    const requestedAcademicYear = Number.isInteger(parsedAcademicYear)
+      ? parsedAcademicYear
+      : currentAcademicYearStart;
+
+    const requestedUnit = String(req.query.unitId ?? "all");
+
     const result = await listAppointmentsForUser(user);
 
-    const currentAcademicYearAppointments = (result ?? []).filter(
-      (appointment) => isInCurrentAcademicYear(appointment.createdAt)
-    );
+    const filteredAppointments = (result ?? []).filter((appointment) => {
+      const matchesAcademicYear = isInAcademicYear(
+        appointment.createdAt,
+        requestedAcademicYear
+      );
 
-    const withCodes = await ensureAppointmentCodes(currentAcademicYearAppointments);
+      const matchesUnit =
+        requestedUnit === "all" ||
+        appointment.unitId === requestedUnit;
+
+      return matchesAcademicYear && matchesUnit;
+    });
+
+    const withCodes = await ensureAppointmentCodes(filteredAppointments);
 
     return res.json(buildAppointmentSummary(withCodes));
   } catch (error) {
