@@ -81,7 +81,7 @@ export default function DataVisualizationsPage() {
       }
     }
 
-    loadSummary();
+    void loadSummary();
   }, [selectedAcademicYear, selectedUnit]);
 
   const chartData = summary
