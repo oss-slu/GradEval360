@@ -1,4 +1,4 @@
-import { LayoutDashboard, CalendarDays, UserCircle2, ClipboardList } from "lucide-react";
+import { LayoutDashboard, CalendarDays, UserCircle2, ClipboardList, BarChart3 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { getUserRole } from "@/lib/auth-client.logic";
 import {
@@ -15,6 +15,7 @@ import {
 const navItems = [
   { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
   { label: "My Appointments", to: "/appointments", icon: CalendarDays },
+  { label: "Visualizations", to: "/visualizations", icon: BarChart3 },
   { label: "Profile", to: "/profile", icon: UserCircle2 },
 ];
 
@@ -25,7 +26,20 @@ const adminNavItems = [
 export function AppSidebar() {
   const pathname = window.location.pathname;
   const { data: session } = authClient.useSession();
-  const items = getUserRole(session) === "Admin" ? [...navItems, ...adminNavItems] : navItems;
+  const userRole = getUserRole(session);
+
+  const items =
+    userRole === "Admin"
+      ? [...navItems, ...adminNavItems]
+      : navItems;
+
+  const visibleNavItems = items.filter((item) => {
+    if (item.to === "/visualizations") {
+      return userRole === "Admin";
+    }
+
+    return true;
+  });
 
   return (
     <Sidebar collapsible="icon">
@@ -34,7 +48,7 @@ export function AppSidebar() {
           <SidebarGroupLabel>GradEval360</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => {
+              {visibleNavItems.map((item) => {
                 const isActive = pathname.startsWith(item.to);
                 return (
                   <SidebarMenuItem key={item.to}>

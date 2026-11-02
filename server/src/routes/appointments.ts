@@ -105,11 +105,54 @@ async function listAppointmentsForUser(user: RequestUser) {
   return [];
 }
 
+function isInAcademicYear(
+  createdAt: Date | null,
+  academicYearStart: number
+) {
+  if (!createdAt) {
+    return false;
+  }
+
+  const startDate = new Date(academicYearStart, 7, 1);
+  const endDate = new Date(academicYearStart + 1, 7, 1);
+
+  return createdAt >= startDate && createdAt < endDate;
+}
+
 router.get("/summary", requireAuth, async (req: any, res) => {
   try {
     const user = req.user as RequestUser;
+
+    const now = new Date();
+    const currentAcademicYearStart =
+      now.getMonth() >= 7
+        ? now.getFullYear()
+        : now.getFullYear() - 1;
+
+    const parsedAcademicYear = Number(req.query.academicYear);
+
+    const requestedAcademicYear = Number.isInteger(parsedAcademicYear)
+      ? parsedAcademicYear
+      : currentAcademicYearStart;
+
+    const requestedUnit = String(req.query.unitId ?? "all");
+
     const result = await listAppointmentsForUser(user);
-    const withCodes = await ensureAppointmentCodes(result ?? []);
+
+    const filteredAppointments = (result ?? []).filter((appointment) => {
+      const matchesAcademicYear = isInAcademicYear(
+        appointment.createdAt,
+        requestedAcademicYear
+      );
+
+      const matchesUnit =
+        requestedUnit === "all" ||
+        appointment.unitId === requestedUnit;
+
+      return matchesAcademicYear && matchesUnit;
+    });
+
+    const withCodes = await ensureAppointmentCodes(filteredAppointments);
 
     return res.json(buildAppointmentSummary(withCodes));
   } catch (error) {

@@ -10,6 +10,7 @@ import DashboardPage from "@/features/dashboard/pages/DashboardPage";
 import LoginPage from "@/pages/LoginPage";
 import MentorExpectationSettingPage from "@/features/appointments/pages/MentorExpectationSettingPage";
 import ProfilePage from "@/pages/ProfilePage";
+import DataVisualizationsPage from "@/pages/DataVisualizationsPage";
 
 const { useSession } = authClient;
 
@@ -42,6 +43,7 @@ function AppRoutes() {
         <Route path="/appointments/new/expectations" element={<MentorExpectationSettingPage />} />
         <Route path="/appointments/:id" element={<AppointmentDetailsPage />} />
         <Route path="/appointments/:id/evaluation" element={<MentorExpectationSettingPage />} />
+        <Route path="/visualizations" element={<DataVisualizationsPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/admin/audit-logs" element={<AuditLogsPage />} />
       </Route>
