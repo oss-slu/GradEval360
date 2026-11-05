@@ -3,11 +3,13 @@
 Welcome to the **GradEval360** development team! This project is the centralized performance management platform for Saint Louis University's Graduate Assistants.
 
 ## Project Focus: Spring 2026
-Our current milestone work completes the full **Milestone 2 annual evaluation workflow**. That includes expectation setting, GA acknowledgment, GA self-evaluation, mentor evaluation, admin sign-off, status reporting, and dashboard visibility through `FinalEvaluated`.
+
+Our current milestone work completes the full **Milestone 2 annual evaluation workflow**. That includes expectation setting, GA acknowledgment, GA self-evaluation, mentor finalization of expectations, mentor evaluation, admin sign-off, status reporting, in-app notifications, an admin audit log, and dashboard visibility through `FinalEvaluated`.
 
 ---
 
 ## How to Get Started
+
 We have a dedicated guide to help you set up your machine. **Please follow this first to ensure your environment is ready:**
 
 - Environment/setup guide: [docs/setup.md](./docs/setup.md)
@@ -16,6 +18,7 @@ We have a dedicated guide to help you set up your machine. **Please follow this 
 ---
 
 ## Prerequisites (Quick Check)
+
 Make sure these are installed before you start:
 
 - Node.js v20+ and npm v10+ (`node -v`, `npm -v`)
@@ -27,6 +30,7 @@ If anything is missing, follow the instructions in `docs/setup.md`.
 ---
 
 ## Project Structure
+
 This is a **monorepo**, meaning all the code for the website, the server, and the database lives in this one folder. Here is a map of the project to help you find your way:
 
 ```text
@@ -62,13 +66,16 @@ See [tests/TESTING.md](./tests/TESTING.md) for the repository testing strategy.
 ---
 
 ## Architecture Diagram
+
 For a high-level system view, see:
+
 - Diagram source: [docs/architecture.mmd](./docs/architecture.mmd)
 - Rendered SVG: [docs/architecture.svg](./docs/architecture.svg)
 
 ---
 
 ## Quick Start (Local)
+
 If you’ve already met the prerequisites, this is the shortest path to running the app locally:
 
 ```bash
@@ -94,6 +101,7 @@ cd client && npm run dev
 ---
 
 ## Environment Variables
+
 Create `server/.env` and set the required values. You can copy the example below and fill in real values:
 
 ```env
@@ -116,6 +124,7 @@ For more detail, see `docs/OKTA_SETUP_AND_SMOKE_TEST.md`.
 ---
 
 ## Common Commands
+
 Run these from the repository root unless noted otherwise:
 
 - Install dependencies: `npm ci`
@@ -128,6 +137,7 @@ Run these from the repository root unless noted otherwise:
 - Run all automated tests: `npm test`
 
 ## Seeded Test Identities
+
 The local seed data includes the shared mentor and GA identities below for smoke testing and workflow verification:
 
 - `mentorA@slu.edu`
@@ -142,6 +152,7 @@ If you need credentials for those accounts, retrieve them from the team’s appr
 ---
 
 ## Local URLs (Health Checks)
+
 Use these to verify everything is running correctly:
 
 - Backend health: `http://localhost:3000/api/health`
@@ -152,8 +163,10 @@ Use these to verify everything is running correctly:
 ---
 
 ## Docs Index
+
 Helpful references in `docs/`:
 
+- User guide: [docs/user-guide.md](./docs/user-guide.md)
 - Setup guide: [docs/setup.md](./docs/setup.md)
 - Okta setup + smoke test: [docs/OKTA_SETUP_AND_SMOKE_TEST.md](./docs/OKTA_SETUP_AND_SMOKE_TEST.md)
 - Auth tables and flow: [docs/AUTH_TABLES_AND_FLOW.md](./docs/AUTH_TABLES_AND_FLOW.md)
@@ -163,19 +176,21 @@ Helpful references in `docs/`:
 - Threat model: [docs/security/threat-model.md](./docs/security/threat-model.md)
 
 ## Workflow Summary
+
 The annual evaluation lifecycle now progresses through these statuses:
 
-`AwaitingExpectationSetting -> ExpectationSet -> AwaitingSelfEvaluation -> SelfEvaluationCompleted -> MentorEvaluationCompleted -> AwaitingSignOff -> FinalEvaluated`
-
+`AwaitingExpectationSetting -> ExpectationSet -> AwaitingMentorFinalization -> AwaitingSelfEvaluation -> SelfEvaluationCompleted -> MentorEvaluationCompleted -> AwaitingSignOff -> FinalEvaluated`
 
 ---
 
 ## Contributing
+
 We welcome contributors. Start with [CONTRIBUTING.md](./CONTRIBUTING.md) for setup, issue labels, and PR expectations.
 
 ---
 
 ## Troubleshooting (Short List)
+
 - If `npm ci` changes `package-lock.json`, don’t commit unless you added/updated a dependency.
 - If the DB UI can’t connect, try `docker-compose down -v` and re-run setup.
 - If auth fails, follow the policy/redirect checks in `docs/OKTA_SETUP_AND_SMOKE_TEST.md`.
@@ -183,14 +198,16 @@ We welcome contributors. Start with [CONTRIBUTING.md](./CONTRIBUTING.md) for set
 ---
 
 ## Tech Stack
+
 This project uses a TypeScript-based stack across the frontend, backend, and database layers.
 
 - **Frontend:** React + shadcn/ui
 - **Backend:** Node.js + Drizzle ORM
 - **Database:** PostgreSQL
-- **Authentication:** Better Auth with a mock Okta / OIDC development flow
+- **Authentication:** Better Auth with Okta / OIDC single sign on
 
 ---
 
 ## License
+
 This project is licensed under the BSD 3-Clause License. See `LICENSE` for details.

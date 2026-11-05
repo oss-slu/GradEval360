@@ -23,5 +23,8 @@
   },
   "overrides": {
     "esbuild": "0.25.0"
+  },
+  "dependencies": {
+    "recharts": "3.10.1"
   }
 }

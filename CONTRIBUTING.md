@@ -6,6 +6,7 @@ This document outlines the workflow and standards for contributors to this proje
 
 ## Before You Start
 
+- Learn what each role does: [docs/user-guide.md](docs/user-guide.md)
 - Read the setup guide: [docs/setup.md](docs/setup.md)
 - Review our code of conduct: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
 - Skim the architecture diagram: [docs/architecture.svg](docs/architecture.svg)
@@ -15,6 +16,7 @@ This document outlines the workflow and standards for contributors to this proje
 ## Workflow
 
 ### Branching Strategy
+
 To keep our project organized, we link all code changes directly to issues.
 
 1. **Create Branch:**  
