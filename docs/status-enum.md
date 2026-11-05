@@ -2,11 +2,12 @@
 
 This document describes the Milestone 2 annual evaluation workflow as implemented in:
 
-- [server/src/db/schema.ts](../server/src/db/schema.ts)
-- [server/src/routes/appointments.ts](../server/src/routes/appointments.ts)
-- [client/src/pages/appointment-details.tsx](../client/src/pages/appointment-details.tsx)
+- [shared/schemas/appointment.ts](../shared/schemas/appointment.ts)
+- [client/src/features/appointments/pages/AppointmentDetailsPage.tsx](../client/src/features/appointments/pages/AppointmentDetailsPage.tsx)
 
 The appointment details page is the primary action surface for every actor after appointment creation.
+
+For a non-technical, role-by-role walkthrough of these steps, see the [User Guide](./user-guide.md).
 
 ## Status Flow
 
@@ -24,7 +25,7 @@ The appointment details page is the primary action surface for every actor after
    - `expectationData.expectationsMeetingDate`
    - `expectationData.mentorAcknowledged = true`
    - `expectationData.mentorAcknowledgedAt`
-   Next status: `ExpectationSet`
+     Next status: `ExpectationSet`
 
 2. **ExpectationSet**
    Displayed when: Mentor expectations are saved and awaiting GA acknowledgment.
@@ -34,10 +35,21 @@ The appointment details page is the primary action surface for every actor after
    - `expectationData.gaGoals`
    - `expectationData.gaAcknowledged = true`
    - `expectationData.gaAcknowledgedAt`
-   Next status: `AwaitingSelfEvaluation`
+   - Optional: `expectationData.gaComments
+Next status: `AwaitingMentorFinalization`
 
-3. **AwaitingSelfEvaluation**
-   Displayed when: GA has acknowledged expectations and self-evaluation is pending.
+3. **AwaitingMentorFinalization**
+   Displayed when: GA has acknowledged expectations and the mentor has not yet finalized them.
+   Primary actor: Mentor
+   Action to advance: Mentor reviews the GA response and sets the end-of-year workflow start date.
+   Required data:
+   - `expectationData.endOfYearStartDate`
+   - `expectationData.mentorFinalized = true`
+   - `expectationData.mentorFinalizedAt`
+     Next status: `AwaitingSelfEvaluation`
+
+4. **AwaitingSelfEvaluation**
+   Displayed when: Mentor has finalized expectations and self-evaluation is pending.
    Primary actor: GA
    Action to advance: GA submits self-evaluation.
    Required data:
@@ -45,9 +57,9 @@ The appointment details page is the primary action surface for every actor after
    - `selfEvaluationData.strengths`
    - `selfEvaluationData.challenges`
    - Optional: `selfEvaluationData.additionalComments`
-   Next status: `SelfEvaluationCompleted`
+     Next status: `SelfEvaluationCompleted`
 
-4. **SelfEvaluationCompleted**
+5. **SelfEvaluationCompleted**
    Displayed when: GA self-evaluation is complete and mentor evaluation can begin.
    Primary actor: Mentor
    Action to advance: Mentor completes evaluation from the appointment details page.
@@ -56,9 +68,9 @@ The appointment details page is the primary action surface for every actor after
    - `mentorEvaluationData.narrative`
    - `mentorEvaluationData.overallSummary`
    - `mentorEvaluationData.finalMeetingDate`
-   Next status: `MentorEvaluationCompleted`
+     Next status: `MentorEvaluationCompleted`
 
-5. **MentorEvaluationCompleted**
+6. **MentorEvaluationCompleted**
    Displayed when: Mentor evaluation is submitted and admin review is next.
    Primary actor: Admin
    Action to advance: Admin prepares final sign-off.
@@ -67,9 +79,9 @@ The appointment details page is the primary action surface for every actor after
    - `mentorEvaluationData.signOffNotes`
    - `mentorEvaluationData.signOffPreparedAt`
    - `mentorEvaluationData.signOffPreparedBy`
-   Next status: `AwaitingSignOff`
+     Next status: `AwaitingSignOff`
 
-6. **AwaitingSignOff**
+7. **AwaitingSignOff**
    Displayed when: Admin sign-off notes are prepared and final acknowledgment is pending.
    Primary actor: Admin
    Action to advance: Admin confirms final acknowledgment.
@@ -77,9 +89,9 @@ The appointment details page is the primary action surface for every actor after
    - `mentorEvaluationData.finalAcknowledged = true`
    - `mentorEvaluationData.finalAcknowledgedAt`
    - `mentorEvaluationData.finalAcknowledgedBy`
-   Next status: `FinalEvaluated`
+     Next status: `FinalEvaluated`
 
-7. **FinalEvaluated**
+8. **FinalEvaluated**
    Displayed when: Evaluation cycle is fully complete.
    Primary actor: System / read-only
    Action to advance: none
@@ -90,6 +102,7 @@ The appointment details page is the primary action surface for every actor after
 - Mentor owns:
   - expectation setting
   - mentor evaluation
+  - expectation finalization
 - GA owns:
   - expectation acknowledgment
   - self-evaluation
