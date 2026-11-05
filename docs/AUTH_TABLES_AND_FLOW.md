@@ -7,10 +7,12 @@ This document explains why the server has separate auth tables, how they are use
 The server uses two sets of user data:
 
 1. **Domain users table** (`users`)
+
 - Purpose: business/domain identity for GradEval360 (Admin/GA/Mentor assignments used by app features).
 - Defined in: `server/src/db/schema.ts` (`users`).
 
 2. **Authentication tables** (`user`, `session`, `account`, `verification`)
+
 - Purpose: session, OAuth account linkage, login state, and OAuth state verification for Better Auth.
 - Defined in: `server/src/db/schema.ts` (`authUsers`, `authSessions`, `authAccounts`, `authVerifications`).
 
@@ -19,6 +21,7 @@ Keeping these concerns separate makes auth provider integration easier and prote
 ## Auth Tables and Their Roles
 
 ## `user` (`authUsers`)
+
 - Stores authenticated user profile used by Better Auth.
 - Key fields:
   - `id`
@@ -27,14 +30,17 @@ Keeping these concerns separate makes auth provider integration easier and prote
   - `role` (custom additional field, default `GA`)
 
 ## `session` (`authSessions`)
+
 - Stores active login sessions.
 - Used when backend resolves current user via cookie/session token.
 
 ## `account` (`authAccounts`)
+
 - Stores OAuth provider link to auth user.
 - For Okta, links `providerId="okta"` + provider account id to local auth user id.
 
 ## `verification` (`authVerifications`)
+
 - Stores temporary verification/state records (including OAuth state during redirect flow).
 - Required for OAuth initiation and callback validation.
 
@@ -54,7 +60,7 @@ If one of these mappings or tables is missing, OAuth login fails (common error: 
 ## Okta Login Flow (Current Implementation)
 
 1. Browser opens `GET /api/auth/signin/okta` (compatibility route in `server/src/index.ts`).
-2. That route triggers `POST /api/auth/sign-in/oauth2` with `providerId: "okta"`.
+2. That route returns a small page that loads /api/auth/signin/okta/redirect.js, which calls POST /api/auth/sign-in/oauth2 with providerId: "okta".
 3. Better Auth creates OAuth state in `verification`.
 4. User is redirected to Okta.
 5. Okta redirects back to `/api/auth/oauth2/callback/okta`.

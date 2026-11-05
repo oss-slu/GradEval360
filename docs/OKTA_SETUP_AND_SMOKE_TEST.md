@@ -1,6 +1,6 @@
 # Okta App Setup and Smoke Test (GradEval360)
 
-This guide documents how to create and configure the Mock Okta app for local development, and how to run the auth smoke test.
+This guide documents how to create and configure the Okta developer app for local development, and how to run the auth smoke test.
 
 ## 1. Create Okta Application
 
@@ -65,9 +65,9 @@ Use an Okta user with an email that exists in seed data, e.g.:
 - `gaB@slu.edu`
 - `gaC@slu.edu`
 - `gaD@slu.edu`
-- `premkiran.polepalli@slu.edu`
-- `darcy.mupenda@slu.edu`
-- `elizabeth.dreste@slu.edu`
+- `david.g.pan@slu.edu`
+- `melody.neimeyer@slu.edu`
+- `jada.harvey.1@slu.edu`
 
 Source: `server/src/db/seed.ts`
 
@@ -78,12 +78,14 @@ For the shared mentor and GA test identities above, retrieve credentials from th
 In separate terminals:
 
 1. Server:
+
 ```bash
 cd server
 npm run dev
 ```
 
 2. Client:
+
 ```bash
 cd client
 npm run dev
