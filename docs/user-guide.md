@@ -15,36 +15,35 @@ To sign out, click **Logout** in the top-right corner.
 **Top bar** (on every page):
 
 - **GradEval360**: returns to the dashboard.
-- **Bell icon**: your notifications. A red number shows how many are unread.
+- **Bell icon**: your notifications. A red number shows how many are unread. Click a notification to to mark it as read, or click **Mark all as read**.
 - **Your name and role**: confirms who you're signed in as.
-- **Your initials**: opens your Profile
+- **Your initials**: opens your Profile, which shows your name, email, role, and assigned units.
 - **Logout**: signs you out.
 
 **Side menu** (on the left; it can be expanded or collapsed):
 
-| Menu item       | Who sees it    | What it opens                            |
-| --------------- | -------------- | ---------------------------------------- |
-| Dashboard       | Everyone       | Your summary and pending items           |
-| My Appointments | Everyone       | The list of appointments you can see     |
-| Profile         | Everyone       | Your account details                     |
-| Audit Logs      | Administrators | A history of actions taken in your units |
+| Menu item       | Who sees it    | What it opens                                   |
+| --------------- | -------------- | ----------------------------------------------- |
+| Dashboard       | Everyone       | Your summary and pending items                  |
+| My Appointments | Everyone       | The list of appointments you can see            |
+| Profile         | Everyone       | Your account details                            |
+| Audit Logs      | Administrators | A history of actions taken in your units        |
+| Visualizations  | Administrators | Charts of appointment progress by year and unit |
 
 ## The evaluation process at a glance
 
 Every appointment goes through these eight steps in order. The current step is shown as the appointment's **status**.
 
-| #   | Status                       | Who acts      | What they do                                                                            | Who gets notified |
-| --- | ---------------------------- | ------------- | --------------------------------------------------------------------------------------- | ----------------- | ------------- |
-| 1   | Awaiting Expectation Setting | Mentor        | Sets the work plan: job category, weekly hours, responsibilities, goals, meeting date   | GA and mentor     | GA and Mentor |
-| 2   | Expectation Set              | GA            | Reviews the plan, adds 1–3 personal goals and optional comments, and acknowledges it    | Mentor and GA     |
-| 3   | Awaiting mentor finalization | Mentor        | Reviews the GA's response and picks the date when the end-of-year self-evaluation opens | (no notification) |
-| 4   | Awaiting Self-Evaluation     | GA            | Once the chosen date arrives, writes a self-evaluation                                  | Mentor and GA     |
-| 5   | Self-Evaluation Completed    | Mentor        | Rates the GA and writes feedback and a summary                                          | GA and mentor     |
-| 6   | Mentor Evaluation Completed  | Administrator | Records a sign-off decision and notes                                                   | GA and mentor     |
-| 7   | Awaiting Sign-Off            | Administrator | Confirms the final review and closes the evaluation                                     | GA and mentor     |
-| 8   | Final Evaluated              | —             | Complete. The record is read-only.                                                      | —                 |
-
-This flow is accessible by clicking on **My Appointments** and then **View Status Flow**
+| #   | Status                       | Who acts      | What they do                                                                                            | Who gets notified |
+| --- | ---------------------------- | ------------- | ------------------------------------------------------------------------------------------------------- | ----------------- |
+| 1   | Awaiting Expectation Setting | Mentor        | Sets the work plan: job category, weekly hours, responsibilities, expected outputs, goals, meeting date | GA and mentor     |
+| 2   | Expectation Set              | GA            | Reviews the plan, adds 1–3 personal goals and optional comments, and acknowledges it                    | Mentor and GA     |
+| 3   | Awaiting mentor finalization | Mentor        | Reviews the GA's response and picks the date when the end-of-year self-evaluation opens                 | (no notification) |
+| 4   | Awaiting Self-Evaluation     | GA            | Once the chosen date arrives, writes a self-evaluation                                                  | Mentor and GA     |
+| 5   | Self-Evaluation Completed    | Mentor        | Rates the GA and writes feedback and a summary                                                          | GA and mentor     |
+| 6   | Mentor Evaluation Completed  | Administrator | Records a sign-off decision and notes                                                                   | GA and mentor     |
+| 7   | Awaiting Sign-Off            | Administrator | Confirms the final review and closes the evaluation                                                     | GA and mentor     |
+| 8   | Final Evaluated              | —             | Complete. The record is read-only.                                                                      | —                 |
 
 ## Pages everyone uses
 
@@ -77,7 +76,7 @@ This page lists every appointment you can see, as cards. Each card shows:
 - An action button (for example **Set expectations** or **Complete self-evaluation**) when it's your turn.
 - **View details**, which opens the full appointment.
 
-Use the **Filters** panel to narrow the list by **Status**, **Mentor** or **GA**. Click **View Status Flow** to see the steps of the process.
+Use the **Filters** panel to narrow the list by **Status**, **Mentor** or **GA**.
 
 ### Appointment details
 
@@ -250,6 +249,16 @@ These actions are recorded:
 The page shows the most recent 200 entries. **Export CSV** is not available yet.
 
 Only administrators can open Audit Logs. Anyone else sees "Only administrators can view audit logs."
+
+### Visualizations
+
+Choose **Visualizations** in the side menu to see charts of appointment progress.
+
+- Pick an **Academic Year** (the current year or either of the two before it) and a **Unit** (All Units or a single unit).
+- Three tiles show **Total Appointments**, **In Progress** and **Completed**.
+- The **Appointments by Status** bar chart shows how many appointments are at each step.
+
+Only administrators can open this page. Anyone else is sent back to the dashboard.
 
 ---
 
