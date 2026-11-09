@@ -79,6 +79,24 @@ export default function DashboardPage() {
 
           <WelcomeBanner />
 
+          {userRole === "Admin" && (
+            <div className="flex flex-wrap gap-3">
+              <Button
+                variant="outline"
+                onClick={() => navigate("/admin/audit-logs")}
+              >
+                Audit Logs
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => navigate("/visualizations")}
+              >
+                Data Visualizations
+              </Button>
+            </div>
+          )}
+
           {loading ? (
             <div className="rounded-xl border bg-card p-6 shadow-sm">
               <p className="text-sm text-muted-foreground">Loading milestone summary...</p>
