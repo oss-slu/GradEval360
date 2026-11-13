@@ -62,7 +62,7 @@ export default function GaRosterPage() {
       }
     }
 
-    load();
+    void load();
     return () => controller.abort();
   }, [isAdmin]);
 
