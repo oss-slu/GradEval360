@@ -83,6 +83,13 @@ export default function DashboardPage() {
             <div className="flex flex-wrap gap-3">
               <Button
                 variant="outline"
+                onClick={() => navigate("/admin/ga-roster")}
+              >
+                GA Roster
+              </Button>
+
+              <Button
+                variant="outline"
                 onClick={() => navigate("/admin/audit-logs")}
               >
                 Audit Logs
