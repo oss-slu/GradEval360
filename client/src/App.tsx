@@ -7,6 +7,7 @@ import AppointmentDetailsPage from "@/features/appointments/pages/AppointmentDet
 import AppointmentsPage from "@/features/appointments/pages/AppointmentsPage";
 import AuditLogsPage from "@/features/audit/pages/AuditLogsPage";
 import DashboardPage from "@/features/dashboard/pages/DashboardPage";
+import GaRosterPage from "@/features/ga-roster/pages/GaRosterPage";
 import LoginPage from "@/pages/LoginPage";
 import MentorExpectationSettingPage from "@/features/appointments/pages/MentorExpectationSettingPage";
 import ProfilePage from "@/pages/ProfilePage";
@@ -46,6 +47,7 @@ function AppRoutes() {
         <Route path="/visualizations" element={<DataVisualizationsPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/admin/audit-logs" element={<AuditLogsPage />} />
+        <Route path="/admin/ga-roster" element={<GaRosterPage />} />
       </Route>
       <Route path="*" element={<Navigate to={isAuthed ? "/dashboard" : "/login"} replace />} />
     </Routes>

@@ -1,4 +1,4 @@
-import { LayoutDashboard, CalendarDays, UserCircle2, ClipboardList, BarChart3 } from "lucide-react";
+import { LayoutDashboard, CalendarDays, UserCircle2, ClipboardList, BarChart3, Users } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { getUserRole } from "@/lib/auth-client.logic";
 import {
@@ -20,6 +20,7 @@ const navItems = [
 ];
 
 const adminNavItems = [
+  { label: "GA Roster", to: "/admin/ga-roster", icon: Users },
   { label: "Audit Logs", to: "/admin/audit-logs", icon: ClipboardList },
 ];
 
