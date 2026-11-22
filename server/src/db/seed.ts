@@ -2,6 +2,7 @@ import { db } from './index.js';
 import { users, appointments, userUnits } from './schema.js';
 import type { InferInsertModel } from 'drizzle-orm';
 import { generateAppointmentCode } from "../lib/appointment-code.js";
+import { runAuditBackfill } from "../lib/audit-backfill.js";
 
 async function seed() {
   console.log('Starting safe seeding process...');
@@ -181,6 +182,9 @@ async function seed() {
         .onConflictDoNothing();
     }
   }
+
+  const { entriesInserted } = await runAuditBackfill();
+  console.log(`Added ${entriesInserted} audit log entries for seeded appointments.`);
 
   console.log('Seeding complete! Database is in sync.');
   process.exit(0);

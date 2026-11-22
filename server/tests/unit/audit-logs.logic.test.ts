@@ -104,6 +104,10 @@ test("buildAuditDescription produces readable text for every action", () => {
   assert.equal(buildAuditDescription(AUDIT_ACTIONS.APPOINTMENT_CREATED, "GA A"), "Created appointment for GA A");
   assert.equal(buildAuditDescription(AUDIT_ACTIONS.EXPECTATIONS_SET, "GA A"), "Set expectations for GA A");
   assert.equal(buildAuditDescription(AUDIT_ACTIONS.EXPECTATIONS_ACKNOWLEDGED, "GA A"), "Acknowledged expectations");
+  assert.equal(
+    buildAuditDescription(AUDIT_ACTIONS.EXPECTATIONS_FINALIZED, "GA A"),
+    "Finalized expectations for GA A",
+  );
   assert.equal(buildAuditDescription(AUDIT_ACTIONS.SELF_EVALUATION_SUBMITTED), "Submitted self-evaluation");
   assert.equal(
     buildAuditDescription(AUDIT_ACTIONS.MENTOR_EVALUATION_SUBMITTED, "GA B"),

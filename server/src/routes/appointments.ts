@@ -476,6 +476,13 @@ router.patch("/:id/expectations/finalize", requireAuth, async (req: any, res) =>
       .where(eq(appointments.id, appointmentId))
       .returning();
 
+    await recordAuditLog({
+      actor: user,
+      action: AUDIT_ACTIONS.EXPECTATIONS_FINALIZED,
+      appointmentId,
+      gaId: appointment.gaId,
+    });
+
     return res.json(updatedAppointment);
   } catch (error) {
     console.error("Error finalizing expectations:", error);

@@ -4,6 +4,7 @@ export const AUDIT_ACTIONS = {
   APPOINTMENT_CREATED: "AppointmentCreated",
   EXPECTATIONS_SET: "ExpectationsSet",
   EXPECTATIONS_ACKNOWLEDGED: "ExpectationsAcknowledged",
+  EXPECTATIONS_FINALIZED: "ExpectationsFinalized",
   SELF_EVALUATION_SUBMITTED: "SelfEvaluationSubmitted",
   MENTOR_EVALUATION_SUBMITTED: "MentorEvaluationSubmitted",
   SIGN_OFF_PREPARED: "SignOffPrepared",
@@ -98,6 +99,8 @@ export function buildAuditDescription(action: AuditAction, gaName?: string | nul
       return `Set expectations for ${subject}`;
     case AUDIT_ACTIONS.EXPECTATIONS_ACKNOWLEDGED:
       return "Acknowledged expectations";
+    case AUDIT_ACTIONS.EXPECTATIONS_FINALIZED:
+      return `Finalized expectations for ${subject}`;
     case AUDIT_ACTIONS.SELF_EVALUATION_SUBMITTED:
       return "Submitted self-evaluation";
     case AUDIT_ACTIONS.MENTOR_EVALUATION_SUBMITTED:

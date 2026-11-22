@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, jsonb, pgEnum, boolean } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, timestamp, jsonb, pgEnum, boolean, index } from 'drizzle-orm/pg-core';
 import { sql } from "drizzle-orm";
 import { UserRoleEnum } from "../../../shared/src/types";
 
@@ -192,4 +192,6 @@ export const auditLogs = pgTable('audit_logs', {
   createdAt: timestamp('created_at')
     .notNull()
     .defaultNow(),
-});
+}, (table) => [
+  index('audit_logs_created_at_idx').on(table.createdAt.desc()),
+]);
