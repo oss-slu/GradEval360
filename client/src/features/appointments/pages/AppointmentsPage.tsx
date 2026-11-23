@@ -164,27 +164,12 @@ export default function AppointmentsPage() {
             </div>
 
             {userRole === "Mentor" && (
-              <select
-                className="rounded-md border bg-white px-3 py-2 text-sm font-medium text-foreground shadow-sm"
-                defaultValue=""
-                onChange={(event) => {
-                  const value = event.target.value;
-
-                  if (value === "expectations") {
-                    navigate("/appointments/new/expectations");
-                  }
-
-                  if (value === "evaluation") {
-                    navigate("/appointments/new/evaluation");
-                  }
-                }}
+              <Button
+                type="button"
+                onClick={() => navigate("/appointments/new/expectations")}
               >
-                <option value="" disabled>
-                  Start new appointment
-                </option>
-                <option value="expectations">Initial expectation-setting</option>
-                <option value="evaluation">Final evaluation</option>
-              </select>
+                Begin New Appointment
+              </Button>
             )}
           </div>
 
