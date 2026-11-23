@@ -10,6 +10,7 @@
     "smoke:auth": "tsx src/scripts/auth-smoke.ts",
     "test:integration": "tsx src/scripts/integration-test.ts",
     "seed": "tsx src/db/seed.ts",
+    "backfill:audit": "tsx src/scripts/backfill-audit-logs.ts",
     "db:push": "npx drizzle-kit push",
     "build": "tsc",
     "start": "tsx src/index.ts",
