@@ -1,166 +1,108 @@
-# GradEval360 Threat Model
+# GradEval360 — Living Threat Model
 
-Last updated: May 3, 2026
+- **Repository:** [oss-slu/GradEval360](https://github.com/oss-slu/GradEval360)
+- **License:** BSD 3-Clause License
+- **Target Organization:** Saint Louis University (Graduate Education)
+- **Architecture:** React/Vite SPA (`client/`), Express.js API (`server/`), Drizzle ORM + PostgreSQL, Better Auth + Okta OIDC, Shared Zod Schemas (`shared/`)
+- **Methodology:** State-Machine STRIDE + Risk-Centric PASTA
+- **Status:** Active / Living Document (Every milestone PR modifying routes in `server/src/routes/` or schemas in `shared/schemas/` should review and update this file)
 
-## Scope
+---
 
-This threat model covers the current GradEval360 Milestone 2 annual evaluation workflow. The in-scope system includes the React client, Express API, Better Auth and Okta OIDC login flow, Drizzle/Postgres persistence layer, domain users, user-unit assignments, appointment records, evaluation payloads, and contributor-facing project documentation.
+## 1. Executive Summary
 
-The current workflow progresses through:
+GradEval360 is the centralized performance evaluation and appointment workflow platform for Saint Louis University's Graduate Assistants (GAs), Faculty Mentors, and Graduate Education Administrators. Because the system governs an eight-stage annual evaluation lifecycle—culminating in formal administrative sign-off (`FinalEvaluated`) that directly impacts student academic standing, stipend renewals, and employment records—its primary security imperatives are **confidentiality of educational/employment records (FERPA alignment)** and **strict workflow state-transition integrity**.
 
-`AwaitingExpectationSetting -> ExpectationSet -> AwaitingSelfEvaluation -> SelfEvaluationCompleted -> MentorEvaluationCompleted -> AwaitingSignOff -> FinalEvaluated`
+Combining STRIDE with risk-centric PASTA considerations, our assessment highlights three top risks:
+1. **Cross-Role Authorization & State-Machine Bypass:** Where a GA or unauthorized mentor could read confidential evaluations or skip mandatory approval states.
+2. **Session & OIDC Configuration Vulnerabilities:** Around Better Auth, Okta OIDC callbacks, and local administrative database tools (`pgAdmin` on port 8080).
+3. **Open-Source Supply Chain & Seed Identity Leakage:** In a public monorepo containing shared Zod contracts, database scripts, and test accounts.
 
-This document is a living security artifact. It should be updated whenever authentication, authorization, deployment, data retention, or evaluation workflow behavior changes.
+---
 
-## System Context
+## 2. Product Context & Regulated Assets
 
-GradEval360 is a role-based evaluation platform for Graduate Assistants, mentors, and administrators. The most security-sensitive behavior is not payment processing or public content publishing; it is protecting evaluation records, role-specific actions, and administrative sign-off integrity.
+GradEval360 orchestrates a multi-party annual evaluation workflow progressing sequentially through eight states:
 
-```mermaid
-flowchart LR
-  Browser["Authenticated browser session"]
-  Client["React + Vite client"]
-  API["Express API"]
-  Auth["Better Auth"]
-  Okta["Okta OIDC"]
-  Middleware["Auth middleware"]
-  Routes["Appointment and user routes"]
-  DB["Postgres via Drizzle ORM"]
-  Domain["Domain tables: users, user_units, appointments"]
-  AuthTables["Auth tables: user, session, account, verification"]
-
-  Browser --> Client
-  Client --> API
-  API --> Auth
-  Auth --> Okta
-  API --> Middleware
-  Middleware --> Routes
-  Routes --> DB
-  DB --> Domain
-  DB --> AuthTables
+```text
+AwaitingExpectationSetting -> ExpectationSet -> AwaitingMentorFinalization ->
+AwaitingSelfEvaluation -> SelfEvaluationCompleted -> MentorEvaluationCompleted ->
+AwaitingSignOff -> FinalEvaluated
 ```
 
-Related architecture references:
+### Critical Assets
+- **Protected Educational & Employment Records (FERPA Scope):** Graduate Assistant self-evaluations, mentor performance ratings, narrative feedback, expectation agreements, and appointment statuses.
+- **Identity & Session Artifacts:** SLU Okta OIDC tokens, Better Auth session cookies/records (`BETTER_AUTH_SECRET`), institutional emails, and role bindings (GA, Mentor, Admin).
+- **Compliance & Governance Trails:** In-app notifications, status reports, and the administrative audit log capturing who finalized expectations, submitted evaluations, and executed final sign-off.
 
-- [System architecture diagram](../architecture.svg)
-- [Auth tables and flow](../AUTH_TABLES_AND_FLOW.md)
-- [Appointment status enum reference](../status-enum.md)
+---
 
-## Primary Assets
+## 3. Attack Surface Analysis
 
-- User identity and role claims for GAs, mentors, and admins.
-- Session tokens and auth table records created by Better Auth.
-- Okta OAuth client configuration and client secret.
-- Appointment ownership data: GA ID, mentor ID, unit ID, and appointment code.
-- Evaluation data: expectations, GA self-evaluation, mentor evaluation, sign-off decision, sign-off notes, and final acknowledgment.
-- Workflow state represented by appointment status.
-- Audit-like fields such as `mentorAcknowledgedAt`, `gaAcknowledgedAt`, `evaluationSubmittedBy`, `signOffPreparedBy`, and `finalAcknowledgedBy`.
-- Database credentials and local/deployment environment variables.
-- Source code, tests, documentation, and contributor workflow templates.
+GradEval360 is structured as a TypeScript monorepo comprising `client/` (React + Vite + shadcn/ui), `server/` (Express.js + Drizzle ORM), `shared/` (Zod validation schemas), and a containerized PostgreSQL + pgAdmin stack (`docker-compose.yml`).
 
-## Actors
+| Entry Point / Component | Trust Boundary Crossed | Data Crossing Boundary | Primary Attack Surface |
+| :--- | :--- | :--- | :--- |
+| **React SPA Client** (`client/` on port 5173) | User Browser → Client Presentation Layer | Evaluation forms, narrative feedback, dashboard metrics, session cookies | Stored XSS in multi-line evaluation text fields; client-side route guard bypass |
+| **Better Auth & Okta OIDC** (`/api/auth/signin/okta`) | SLU Okta IdP → Express Auth Middleware | OIDC authorization codes, ID tokens, `OKTA_CLIENT_SECRET`, session state | Open redirect via `OKTA_POST_LOGIN_REDIRECT_URL`; session fixation; CSRF |
+| **Workflow REST Endpoints** (`server/src/routes/*.ts`) | Authenticated Role → Domain Logic & DB | Zod-validated JSON payloads, status transitions, evaluation scores | BOLA/IDOR across GA-Mentor pairs; state-machine skipping (e.g., jumping to `FinalEvaluated`) |
+| **PostgreSQL & pgAdmin** (`docker-compose.yml` / `:8080`) | Server / Ops Network → Persistence Layer | All evaluation tables, Better Auth tables, audit logs, seed credentials | Exposed pgAdmin interface in non-local deployments; weak default DB passwords |
+| **Admin Scripts & Shared Code** (`server/src/scripts/`, `shared/`) | CLI / Build Pipeline → Production Runtime | Seed identities (`mentorA@slu.edu`, `gaA@slu.edu`), backfill mutations | Accidental execution of seed/backfill scripts on production DB; schema drift |
+| **Public GitHub Repository** (Issues, PRs, Actions CI) | External OSS Community → Main Branch | TypeScript source, Drizzle migrations, `.env` templates, test fixtures | Malicious PRs weakening middleware checks; dependency supply chain poisoning |
 
-- **GA:** Can view assigned appointments, acknowledge expectations, submit self-evaluation, and review final state.
-- **Mentor:** Can view assigned appointments, set expectations, and submit mentor evaluation.
-- **Admin:** Can view appointments by unit scope and complete final sign-off actions.
-- **Unauthenticated attacker:** Attempts to access API routes or login flows without a valid session.
-- **Authenticated but unauthorized user:** Has a valid session but attempts to access another role, unit, or appointment.
-- **Contributor or maintainer:** Can propose code or documentation changes and may accidentally weaken security.
-- **Compromised identity provider or misconfigured Okta app:** Could affect login trust, redirect behavior, or role mapping.
+### User Roles & Trust Boundaries
+- **Graduate Assistant (GA):** Can view and acknowledge their own expectations and submit their own self-evaluation during valid workflow states; must never view draft mentor evaluations prematurely or access other GAs' records.
+- **Faculty / Staff Mentor:** Can draft and finalize expectations and submit evaluations strictly for assigned GAs; cannot perform administrative sign-off or view evaluations outside their mentorship scope.
+- **Graduate Education Administrator:** Holds institutional oversight across all appointments, executes final sign-off (`AwaitingSignOff` → `FinalEvaluated`), views status reports, and inspects the admin audit log.
 
-## Trust Boundaries
+---
 
-- Browser to Express API over HTTP in local development and HTTPS in any deployed environment.
-- Express API to Better Auth session verification.
-- Better Auth to Okta OIDC provider.
-- Authenticated user session to domain user lookup by email.
-- API route handlers to Postgres through Drizzle ORM.
-- Domain authorization checks between GAs, mentors, admins, units, and appointment records.
-- Repository contribution boundary between trusted maintainers and external contributors.
+## 4. Threat Catalog (STRIDE & Open-Source Analysis)
 
-## Existing Controls
+| ID | Category | Threat Description | Potential Impact | Likelihood / Impact | Affected Components & Actors |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **T-01** | Information Disclosure | **Cross-Appointment IDOR:** An authenticated GA or Mentor queries `/api/evaluations/:id` with another student's appointment ID, bypassing mentorship relationship checks. | Breach of confidential student performance evaluations (FERPA violation) and institutional reputational harm. | **Likelihood:** Medium<br>**Impact:** Critical | `server/src/routes/`, `server/src/middleware/`; GAs & Mentors. |
+| **T-02** | Tampering | **Workflow State-Machine Bypass:** A client submits direct API calls to transition an evaluation out of sequence (e.g., editing expectations after `FinalEvaluated` or self-approving sign-off). | Invalidation of official HR/academic evaluation records and circumvention of mandatory mentor/admin review gates. | **Likelihood:** Medium<br>**Impact:** High | `server/src/routes/*.logic.ts`, Drizzle DB state; GAs & Mentors. |
+| **T-03** | Spoofing | **Seed Identity & OIDC Misconfiguration:** Seeded test accounts (`mentorA@slu.edu`, `gaA@slu.edu`) remain active in staging/production, or `BETTER_AUTH_SECRET` uses a weak/default string. | Unauthorized login as a seeded mentor or forging of Better Auth session tokens to impersonate administrators. | **Likelihood:** Low<br>**Impact:** Critical | `server/src/db/` seed scripts, Better Auth config; All Users. |
+| **T-04** | Elevation of Privilege | **Exposed Database Admin UI (pgAdmin):** Container configuration from `docker-compose.yml` (port 8080) is carried into a network-accessible server deployment without firewall restrictions. | Direct read/write access to PostgreSQL tables, bypassing application RBAC and allowing silent alteration of audit logs. | **Likelihood:** Low<br>**Impact:** Critical | `docker-compose.yml`, `servers.json`, PostgreSQL; Ops / Admins. |
+| **T-05** | Tampering / XSS | **Stored XSS via Evaluation Narratives:** Malicious script payloads embedded in expectation descriptions or self-evaluation comments execute when viewed by a Mentor or Admin. | Session hijacking of an Administrator account during evaluation review, leading to unauthorized final sign-offs. | **Likelihood:** Low<br>**Impact:** High | `client/src/features/`, `shared/schemas/`; Mentors & Admins. |
+| **T-06** | Repudiation | **Audit Log Tampering or Gaps:** State transitions or administrative overrides occur without recording immutable actor IDs, timestamps, and before/after values, or admins can delete audit entries. | Inability to prove compliance during student grade/appointment appeals or internal HR audits. | **Likelihood:** Medium<br>**Impact:** Medium | Admin audit log endpoints & schema; Administrators. |
+| **T-07** | Tampering (OSS) | **Malicious OSS PR or Dependency Drift:** Public contributors introduce subtle authorization bypasses in `server/src/middleware/` or compromised npm packages enter via unpinned updates. | Silent weakening of authentication checks or exfiltration of `OKTA_CLIENT_SECRET` during CI runs. | **Likelihood:** Medium<br>**Impact:** High | GitHub PR workflow, `package-lock.json`, `.github/` CI. |
+| **T-08** | Denial of Service | **Notification & Report Query Exhaustion:** Unpaginated dashboard queries or automated notification triggers flood the Express server during peak end-of-semester evaluation deadlines. | System slowdown or outage precisely when hundreds of GAs and mentors must complete evaluations before deadlines. | **Likelihood:** Medium<br>**Impact:** Medium | `server/src/routes/` dashboard & notification handlers; All Users. |
 
-- Protected API routes call `requireAuth`.
-- Session resolution is delegated to Better Auth.
-- Okta OAuth is configured through Better Auth generic OAuth.
-- Required auth environment variables are checked during server startup.
-- Domain user role and unit data are resolved from the database during authenticated requests.
-- Appointment access is role-scoped through `canAccessAppointment`.
-- Appointment list queries are scoped by GA, mentor, or admin unit access.
-- Workflow transitions require the appointment to be in the expected status before mutation.
-- Request payloads are validated with shared Zod schemas.
-- Database access uses Drizzle ORM instead of string-concatenated SQL for normal queries.
-- Testing guidance and contribution docs exist to reduce accidental regressions.
+---
 
-## Assumptions
+## 5. Risk Prioritization Matrix
 
-- Production deployment will use HTTPS and secure cookie settings.
-- Okta is the authoritative identity provider for institutional users.
-- Role and unit assignments in the domain database are maintained by trusted admins or seed/setup processes.
-- Evaluation records may contain sensitive academic or employment-related information.
-- External contributors should not receive production secrets or privileged database access.
+| Priority Tier | Threat IDs | Rationale | Target Timeline |
+| :--- | :--- | :--- | :--- |
+| **P1 — Immediate** | T-01, T-02, T-03 | Protects core FERPA confidentiality, enforces the 8-state evaluation lifecycle, and hardens Better Auth / Okta production secrets. | Current Milestone (Before Milestone 2 production rollout) |
+| **P2 — Near-Term** | T-04, T-05, T-06 | Secures deployment infrastructure (pgAdmin isolation), hardens rich-text rendering, and guarantees tamper-evident audit logging. | Next 1–2 Sprints (Pre-semester deployment checklist) |
+| **P3 — Long-Term** | T-07, T-08 | Strengthens open-source contribution guardrails, automated dependency auditing, and peak-load pagination/rate limiting. | Ongoing / Maintenance Handoff |
 
-## Threat Analysis
+---
 
-| ID | STRIDE | Threat | Impact | Likelihood | Current Controls | Recommended Mitigation |
-| --- | --- | --- | --- | --- | --- | --- |
-| T1 | Spoofing / Elevation of privilege | A user attempts to claim a different role by manipulating client-side session fields or request data. | High | Medium | Server resolves role from domain `users` table in `requireAuth`; route handlers check `user.role`. | Add automated authorization tests for every role/action pair and avoid trusting role values sent by the client. |
-| T2 | Information disclosure | A valid user guesses an appointment ID and tries to view another GA or mentor's record. | High | Medium | `GET /appointments/:id` calls `canAccessAppointment`; list queries are role-scoped. | Keep direct-object access tests for GA, mentor, and admin unit boundaries; log repeated forbidden access attempts. |
-| T3 | Tampering | A user submits workflow data out of order, such as self-evaluation before GA acknowledgment or sign-off before mentor evaluation. | Medium | Medium | Mutation routes check current appointment status before update. | Add integration tests for invalid transition attempts and document transition rules as security-sensitive. |
-| T4 | Tampering / Repudiation | Evaluation payloads are changed without enough evidence of who performed the action. | High | Medium | Several timestamp and actor fields are stored in JSONB payloads. | Add immutable audit events for future production use; include actor ID, action, previous status, next status, and timestamp. |
-| T5 | Information disclosure | Sensitive evaluation data is overexposed in list or summary endpoints. | High | Medium | Current summary returns status counts and pending identifiers; list endpoints return appointment records. | Review API response shapes before deployment and return only fields needed by each view. |
-| T6 | Spoofing | Okta redirect or trusted origin misconfiguration allows auth flow abuse in deployment. | High | Low to Medium | Better Auth config uses required Okta env vars and local trusted origin. | Replace local trusted origins with environment-specific allowlists and document production redirect URI requirements. |
-| T7 | Information disclosure | Secrets such as `OKTA_CLIENT_SECRET`, `BETTER_AUTH_SECRET`, or `DATABASE_URL` are committed or exposed in logs. | High | Medium | README instructs users to create local `.env`; no real secrets are documented. | Add secret scanning in CI and keep example values clearly fake. Never log full environment variables. |
-| T8 | Denial of service | Expensive or unbounded appointment list queries degrade performance as records grow. | Medium | Low to Medium | Queries are scoped by role and unit. | Add pagination, filtering limits, and database indexes for `gaId`, `mentorId`, `unitId`, and `status` before scale. |
-| T9 | Information disclosure / Elevation of privilege | Admin with no `unitId` or `unitIds` can access all appointments. | High | Medium | `canAccessAppointment` currently permits all appointments for admins with no unit scope. | Decide whether global admin is intentional; if not, require explicit unit scope or a separate super-admin role. |
-| T10 | Tampering | JSONB evaluation payloads drift from expected shape or retain legacy fields that confuse UI and reporting. | Medium | Medium | Incoming payloads are validated with shared Zod schemas; status docs describe expected fields. | Add migration and validation checks for existing records; consider structured columns for fields needed in reporting. |
-| T11 | Repudiation | Users can dispute whether they acknowledged expectations or final evaluation because acknowledgment fields are stored inside mutable JSONB. | Medium | Medium | Acknowledgment timestamps and actor names are stored. | Store acknowledgment events in a separate append-only table for production-grade auditability. |
-| T12 | Supply chain / Tampering | A dependency or contributor PR weakens auth, validation, or route access checks. | High | Medium | Contribution guidelines, PR template, and testing strategy exist. | Require review for auth or workflow files, run tests in CI, and enable dependency/security scanning. |
-| T13 | Information disclosure | Local seed identities or logs expose personally identifiable information beyond what contributors need. | Medium | Medium | README lists shared test identities and says credentials must come from approved secret storage. | Keep seed data synthetic where possible and avoid committing real evaluation content. |
-| T14 | Cross-site request forgery / session misuse | Browser-based session cookies are used to mutate evaluation records without intentional user action. | High | Low to Medium | Better Auth handles session behavior; routes require authenticated session. | Confirm SameSite, Secure, and CSRF protections for deployment; add tests or documentation for mutation endpoints. |
+## 6. Mitigation Strategy & Engineering Trade-offs
 
-## Highest Priority Risks
+GradEval360's clean separation between HTTP orchestration (`*.ts`), pure state-transition logic (`*.logic.ts`), and shared Zod schemas (`shared/schemas/`) enables high-assurance security controls with minimal architectural friction.
 
-### 1. Role and Unit Authorization Drift
+| Threat | Planned & Recommended Security Controls | Engineering & Usability Trade-offs | Status |
+| :--- | :--- | :--- | :--- |
+| **T-01 & T-02** (BOLA & State Machine) | Enforce relationship-based access control (ReBAC) in server middleware verifying active Mentor–GA pairing or Admin role on every record query. Encode the 8-state transition matrix inside pure functions in `server/src/routes/*.logic.ts` with exhaustive unit tests rejecting out-of-order or post-`FinalEvaluated` mutations. | Requires Administrators to use an explicit "Reopen Evaluation" audit-logged workflow if a finalized evaluation contains a clerical error, adding one extra step for rare corrections. | Planned |
+| **T-03 & T-04** (Auth & DB Ops) | Block `db:setup` seed scripts when `NODE_ENV === 'production'`, enforce >=32-byte random `BETTER_AUTH_SECRET` validation on boot, pin exact `OKTA_POST_LOGIN_REDIRECT_URL` allowlists, and split `docker-compose.prod.yml` to exclude `pgAdmin`. | Operations staff must use SSH tunnels or institutional VPNs for direct database administration rather than a convenient web UI port. | Planned |
+| **T-05 & T-06** (XSS & Audit Integrity) | Rely on React's default JSX escaping (ban `dangerouslySetInnerHTML`) and enforce strict length/character constraints in `shared/schemas/`. Restrict the PostgreSQL application role to `INSERT` and `SELECT` only (revoking `UPDATE`/`DELETE`) on the `audit_logs` table. | Limits rich-text formatting (e.g., custom HTML styling) in evaluation narratives in favor of plain text or safe Markdown. | Planned |
+| **T-07 & T-08** (OSS & Availability) | Require CODEOWNERS review on `server/src/middleware/` and `server/src/db/`, run `npm audit` and `npm run smoke:auth` in GitHub Actions CI, and enforce server-side pagination and Express rate limiting on dashboard/notification routes. | Slightly increases CI runtime and adds minor code review overhead for external student contributors touching authentication or database files. | Backlog |
 
-GradEval360's main security boundary is not just login; it is whether each authenticated user can only act on the appointments they are allowed to access. Role and unit checks should be treated as core product behavior. Any route that returns or mutates appointment data should be covered by role-specific tests.
+---
 
-### 2. Evaluation Record Integrity
+## 7. Open Questions for Future Cohorts & OSS-Cybersecurity
 
-Evaluation records may be used for administrative decisions. The current JSONB payload model is flexible, but production integrity will require stronger audit trails than mutable fields inside a single appointment record. A future append-only event log would make it easier to answer who changed what and when.
+1. **Mentor Reassignment Mid-Cycle:** If a Graduate Assistant changes advisors mid-semester, should the incoming mentor inherit read access to prior draft expectations, or should historical drafts remain sealed to the original mentor and admin?
+2. **Data Retention & Archival Policy:** After a Graduate Assistant graduates or leaves SLU, what is the required retention window for `FinalEvaluated` records before anonymization or archival export?
+3. **Email vs. In-App Notification Privacy:** If email notifications are added in future milestones, how will the system ensure sensitive evaluation text is never leaked in email bodies (sending only generic portal links instead)?
+4. **SSO Role Synchronization:** Are user roles (GA vs. Mentor vs. Admin) derived dynamically from SLU Okta group claims on every login, or persisted locally in Better Auth tables where stale privileges could linger after role changes?
 
-### 3. Deployment Auth Configuration
+---
 
-The current configuration is development-oriented, including local trusted origins. Before deployment, Okta redirect URIs, trusted origins, secure cookies, secrets management, and environment separation need a dedicated review.
-
-## Mitigation Backlog
-
-| Priority | Mitigation | Owner Area |
-| --- | --- | --- |
-| P0 | Add authorization tests for every role and appointment action. | Server tests |
-| P0 | Confirm whether admins without unit scope should have global access. | Product / Security |
-| P1 | Add secret scanning and dependency scanning to CI. | DevOps |
-| P1 | Review API response shapes to minimize evaluation data exposure. | Client / Server |
-| P1 | Document production Okta redirect URI and trusted origin requirements. | Auth docs |
-| P2 | Add append-only audit events for workflow transitions and acknowledgments. | Database / Server |
-| P2 | Add pagination and indexes for appointment list/reporting queries. | Database / Server |
-| P2 | Add data retention and export guidance for evaluation records. | Product / Policy |
-
-## Open Questions
-
-- Should `Admin` mean global administrator, unit administrator, or both?
-- What evaluation fields are considered sensitive by SLU policy?
-- How long should evaluation records be retained?
-- Which users can create appointments, assign mentors, or update unit membership?
-- What production environment will host the client, server, database, and Okta application?
-- Is final acknowledgment intended to be completed by admin only, or should GA acknowledgment also be required in a later milestone?
-
-## Review Cadence
-
-Review this threat model:
-
-- Before production deployment.
-- After changes to auth, roles, appointment status transitions, or evaluation payloads.
-- After adding new user roles or admin capabilities.
-- After user research reveals changes to the real evaluation process.
-- At semester handoff so future teams inherit current security assumptions.
+## Changelog
+- **Initial Assessment:** Created comprehensive state-machine STRIDE & PASTA threat model covering `client/`, `server/`, Better Auth / Okta OIDC, and PostgreSQL/pgAdmin deployment surfaces.
